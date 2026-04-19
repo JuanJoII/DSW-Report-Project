@@ -1,0 +1,9 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine
+WORKDIR /app
+
+COPY . .
+
+EXPOSE 8080
+EXPOSE 8081
+
+ENTRYPOINT ["dotnet", "watch", "run", "--project", "/app/rp-back.csproj", "--non-interactive", "--urls", "http://0.0.0.0:8080"]

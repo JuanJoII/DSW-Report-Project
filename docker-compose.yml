@@ -1,0 +1,57 @@
+services:
+  backend:
+    build:
+      context: ./rp-back
+      dockerfile: Dockerfile.dev
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DOTNET_USE_POLLING_FILE_WATCHER=1
+      # Aseguramos que la conexión apunte al servicio "database" y use la variable segura
+      # - ConnectionStrings__DefaultConnection=Server=database;Database=MiProyectoDb;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True;
+    ports:
+      - "5000:8080"
+    depends_on:
+      - database
+    develop:
+      watch:
+        - action: sync
+          path: ./rp-back
+          target: /app
+          ignore:
+            - bin/
+            - obj/
+        - action: rebuild
+          path: ./rp-back/rp-back.csproj
+
+  frontend:
+    build:
+      context: ./rp-front
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    develop:
+      watch:
+        - action: sync
+          path: ./rp-front
+          target: /app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./rp-front/package.json
+
+  database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    # Eliminamos el container_name fijo para evitar conflictos si clonas el repo en otra carpeta
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${DB_PASSWORD} # <-- Reemplazamos el TuPassword123! por tu .env
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql # <-- Tu configuración de persistencia
+
+# Declaración obligatoria de los volúmenes nombrados al final del archivo
+volumes:
+  sqlserver_data:
