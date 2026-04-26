@@ -6,8 +6,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - DOTNET_USE_POLLING_FILE_WATCHER=1
-      # Aseguramos que la conexión apunte al servicio "database" y use la variable segura
-      # - ConnectionStrings__DefaultConnection=Server=database;Database=MiProyectoDb;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True;
+      - ConnectionStrings__DefaultConnection=Server=${SERVER_HOST},${SERVER_PORT};Database=${DATABASE_NAME};User Id=${DATABASE_USER};Password=${DB_PASSWORD};TrustServerCertificate=True;
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
     ports:
       - "5000:8080"
     depends_on:
@@ -43,15 +45,13 @@ services:
 
   database:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    # Eliminamos el container_name fijo para evitar conflictos si clonas el repo en otra carpeta
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=${DB_PASSWORD} # <-- Reemplazamos el TuPassword123! por tu .env
+      - MSSQL_SA_PASSWORD=${DB_PASSWORD}
     ports:
       - "1433:1433"
     volumes:
-      - sqlserver_data:/var/opt/mssql # <-- Tu configuración de persistencia
+      - sqlserver_data:/var/opt/mssql
 
-# Declaración obligatoria de los volúmenes nombrados al final del archivo
 volumes:
   sqlserver_data:
