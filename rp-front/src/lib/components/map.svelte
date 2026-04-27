@@ -59,8 +59,8 @@
       const currentPos = marker.getLatLng();
       if (currentPos.lat !== latitud || currentPos.lng !== longitud) {
         marker.setLatLng([latitud, longitud]);
-        // Solo centramos el mapa automáticamente si la precisión es alta (viniendo de GPS)
-        // o si es el cambio inicial
+        // Centramos el mapa en la nueva ubicación si el cambio es externo
+        map.setView([latitud, longitud], map.getZoom());
       }
     }
   });

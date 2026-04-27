@@ -1,16 +1,22 @@
 <script lang="ts">
-  import { Map } from "$lib/index";
+  import { Map, AddressSearch } from "$lib/index";
 
   let lat = $state(4.5709);
   let lng = $state(-74.2973);
+
+  function handleAddressSelect(newLat: number, newLng: number) {
+    lat = newLat;
+    lng = newLng;
+  }
 </script>
 
 <main>
   <h1>Geolocalización Svelte 5</h1>
   <p>
-    El mapa se centrará automáticamente en tu ubicación actual si das permisos
-    de GPS.
+    Busca una dirección o utiliza tu ubicación actual para centrar el mapa.
   </p>
+
+  <AddressSearch onSelect={handleAddressSelect} />
 
   <Map bind:latitud={lat} bind:longitud={lng} />
 
