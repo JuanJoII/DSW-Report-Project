@@ -10,6 +10,6 @@ namespace rp_back.Interfaces
     public interface IAuthService
     {
         public Task<Usuario?> RegistrarUsuarioAsync(RegisterDto registerDto);
-        public Task<RespuestaTokensDto?> LoginUsuarioAsync(LoginDto loginDto);
+        public Task<RespuestaLoginDto?> LoginUsuarioAsync(LoginDto loginDto);
     }
 }

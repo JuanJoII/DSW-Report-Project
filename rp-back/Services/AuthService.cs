@@ -20,7 +20,7 @@ namespace rp_back.Services
             _context = context;
             _tokenService = tokenService;
         }
-        public async Task<RespuestaTokensDto?> LoginUsuarioAsync(LoginDto loginDto)
+        public async Task<RespuestaLoginDto?> LoginUsuarioAsync(LoginDto loginDto)
         {
             var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == loginDto.Email);
             if (usuario == null)
@@ -32,8 +32,9 @@ namespace rp_back.Services
                 return null;
             }
 
-            var response = new RespuestaTokensDto
+            var response = new RespuestaLoginDto
             {
+                Id = usuario.Id,
                 AccessToken = _tokenService.GenerateAccessToken(usuario),
                 RefreshToken = await _tokenService.GenerarYGuardarRefreshToken(usuario)
             };
