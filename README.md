@@ -13,7 +13,7 @@ Este proyecto utiliza Docker Compose con el motor de sincronización en tiempo r
 
 2.  Levanta el entorno con sincronización activa:
 ```bash
-    docker compose up --watch
+    docker compose up --watch --build
 ```
 
 ## 🌐 Puertos y Acceso
