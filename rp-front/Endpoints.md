@@ -3,7 +3,7 @@
 ---
 
 ## 🔐 Guía de Integración: Autenticación
-**Base URL:** `http://localhost:5000`
+**Base URL:** `http://backend:8080` (interno Docker) o `http://localhost:8080` (externo)
 
 ### 1. Registro de Usuario
 **Endpoint:** `POST /api/Auth/Register`

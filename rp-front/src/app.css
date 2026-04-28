@@ -1,0 +1,25 @@
+/* Fix Leaflet icons when using CSS resets */
+.leaflet-container img {
+  max-width: none !important;
+  display: inline !important;
+}
+
+:root {
+  --primary-color: #4338ca;
+  --primary-hover: #3730a3;
+  --secondary-color: #6b7280;
+  --error-color: #ef4444;
+  --bg-color: #f4f4f9;
+  --card-bg: #ffffff;
+  --text-color: #333;
+  --border-color: #ddd;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.5;
+  margin: 0;
+  padding: 0;
+}
