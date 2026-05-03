@@ -22,7 +22,7 @@ namespace rp_back.Models
         public Guid AdminId { get; set; } 
         
         [ForeignKey("AdminId")]
-        public virtual Usuario? Admin { get; set; }
+        public virtual required Usuario Admin { get; set; }
 
         [Required]
         public int EstadoNuevoId { get; set; }

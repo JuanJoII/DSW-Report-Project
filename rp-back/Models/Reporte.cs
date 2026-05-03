@@ -16,41 +16,34 @@ namespace rp_back.Models
 
         [Required]
         public Guid UsuarioId { get; set; } 
-    
-        [ForeignKey("UsuarioId")] 
-        public virtual Usuario? Usuario { get; set; }
 
+        [ForeignKey("UsuarioId")] 
+        public virtual required Usuario Usuario { get; set; }
 
         [Required]
         public int CategoriaId { get; set; }
         [ForeignKey("CategoriaId")]
-        public Categoria? Categoria { get; set; }
-
+        public virtual required Categoria Categoria { get; set; }
 
         [Required]
         public int EstadoId { get; set; }
         [ForeignKey("EstadoId")]
-        public EstadoReporte? Estado { get; set; }
-
+        public virtual required EstadoReporte Estado { get; set; }
 
         [Required, Column(TypeName = "text")]
-        public string Descripcion { get; set; } = string.Empty;
+        public required string Descripcion { get; set; } 
 
+        [Required, StringLength(255)]
+        public required string DireccionTexto { get; set; } 
 
-        [StringLength(255)]
-        public string? DireccionTexto { get; set; }
-
-
-        [Column(TypeName = "decimal(9,6)")] 
+        [Required, Column(TypeName = "decimal(9,6)")]
         public decimal Latitud { get; set; }
 
-
-        [Column(TypeName = "decimal(9,6)")]
+        [Required, Column(TypeName = "decimal(9,6)")]
         public decimal Longitud { get; set; }
 
-
-        public DateTime FechaCreacion { get; set; } = DateTime.Now;
-
+        [Required]
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 
         public ICollection<Foto> Fotos { get; set; } = new List<Foto>();
 
