@@ -48,6 +48,8 @@ builder.Services.AddEndpointsApiExplorer();
 // Servicios
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IReporteService, ReporteService>();
+builder.Services.AddScoped<IAdminReporteService, AdminReporteService>();
 
 var app = builder.Build();
 
