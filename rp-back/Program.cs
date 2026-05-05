@@ -73,4 +73,20 @@ app.Use(async (context, next) =>
     await next();
 });
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ReportaSabanaDbContext>();
+        // Migrar la base de datos al iniciar la aplicación
+        context.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "La migración de la base de datos falló. el servidor aun no se ha iniciado o no se ha podido conectar a la base de datos.");
+    }
+}
+
 app.Run();
