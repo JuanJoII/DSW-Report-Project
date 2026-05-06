@@ -22,15 +22,13 @@ namespace rp_back.Controllers
         }
 
         [HttpGet]
-        [AllowAnonymous]
-        public async Task<ActionResult<List<ReporteResumenDTO>>> ObtenerReportes([FromQuery] int? categoriaId, [FromQuery] int? estadoId, [FromQuery] DateTime? fechaDesde, [FromQuery] string? municipio)
+        public async Task<ActionResult<List<ReporteResumenDTO>>> ObtenerReportes([FromQuery] ReporteFiltrosDTO filtros)
         {
-            var reportes = await _reporteService.ObtenerReportesAsync(categoriaId, estadoId, fechaDesde, municipio);
+            var reportes = await _reporteService.ObtenerReportesAsync(filtros);
             return Ok(reportes);
         }
 
         [HttpGet("{id}")]
-        [AllowAnonymous]
         public async Task<ActionResult<ReporteDetalleDTO>> ObtenerReportePorId(int id)
         {
             var reporte = await _reporteService.ObtenerReportePorIdAsync(id);

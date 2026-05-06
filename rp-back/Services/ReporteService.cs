@@ -19,18 +19,18 @@ namespace rp_back.Services
             _context = context;
         }
 
-        public async Task<List<ReporteResumenDTO>> ObtenerReportesAsync(int? categoriaId = null, int? estadoId = null, DateTime? fechaDesde = null, string? municipio = null)
+        public async Task<List<ReporteResumenDTO>> ObtenerReportesAsync(ReporteFiltrosDTO filtros)
         {
             var query = _context.Reportes.Include(r => r.Categoria).Include(r => r.Estado).Include(r => r.Fotos).AsQueryable();
 
-            if (categoriaId.HasValue)
-                query = query.Where(r => r.CategoriaId == categoriaId.Value);
-            if (estadoId.HasValue)
-                query = query.Where(r => r.EstadoId == estadoId.Value);
-            if (fechaDesde.HasValue)
-                query = query.Where(r => r.FechaCreacion >= fechaDesde.Value);
-            if (!string.IsNullOrWhiteSpace(municipio))
-                query = query.Where(r => r.DireccionTexto.Contains(municipio));
+            if (filtros.CategoriaId.HasValue)
+                query = query.Where(r => r.CategoriaId == filtros.CategoriaId.Value);
+            if (filtros.EstadoId.HasValue)
+                query = query.Where(r => r.EstadoId == filtros.EstadoId.Value);
+            if (filtros.FechaDesde.HasValue)
+                query = query.Where(r => r.FechaCreacion >= filtros.FechaDesde.Value);
+            if (!string.IsNullOrWhiteSpace(filtros.Municipio))
+                query = query.Where(r => r.DireccionTexto.Contains(filtros.Municipio));
 
             var reportes = await query.ToListAsync();
 
