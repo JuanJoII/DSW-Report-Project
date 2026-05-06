@@ -29,7 +29,7 @@ namespace rp_back.Controllers
                 return NotFound("Reporte no encontrado para asociar la foto.");
             }
 
-            return CreatedAtAction(nameof(ObtenerFotosPorReporteId), new { reporteId = dTo.ReporteId }, resultado);
+            return StatusCode(StatusCodes.Status201Created, new { message = "Foto de reporte creada exitosamente." });
         }
 
         [HttpGet("{reporteId}")]

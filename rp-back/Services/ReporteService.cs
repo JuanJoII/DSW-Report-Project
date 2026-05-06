@@ -13,6 +13,7 @@ namespace rp_back.Services
     public class ReporteService : IReporteService
     {
         private readonly ReportaSabanaDbContext _context;
+        private const string ESTADO_INICIAL = "Pendiente";
 
         public ReporteService(ReportaSabanaDbContext context)
         {
@@ -34,7 +35,86 @@ namespace rp_back.Services
 
             var reportes = await query.ToListAsync();
 
-            return reportes.Select(r => new ReporteResumenDTO
+            return reportes.Select(MapToResumenDTO).ToList();
+        }
+
+        public async Task<ReporteDetalleDTO?> ObtenerReportePorIdAsync(int id)
+        {
+            var reporte = await _context.Reportes
+                .Include(r => r.Categoria)
+                .Include(r => r.Estado)
+                .Include(r => r.Fotos)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (reporte == null)
+                return null;
+
+            var historial = await _context.Historiales
+                .Include(h => h.Admin)
+                .Include(h => h.EstadoNuevo)
+                .Where(h => h.ReporteId == id)
+                .OrderByDescending(h => h.FechaCambio)
+                .ToListAsync();
+
+            return MapToDetalleDTO(reporte, historial);
+        }
+
+        public async Task<List<ReporteResumenDTO>> ObtenerReportesPorUsuarioAsync(Guid usuarioId)
+        {
+            var reportes = await _context.Reportes
+                .Include(r => r.Categoria)
+                .Include(r => r.Estado)
+                .Include(r => r.Fotos)
+                .Where(r => r.UsuarioId == usuarioId)
+                .ToListAsync();
+
+            return reportes.Select(MapToResumenDTO).ToList();
+        }
+
+        public async Task<ReporteDetalleDTO?> CrearReporteAsync(CrearReporteDTO crearReporteDto, Guid usuarioId)
+        {
+            var usuario = await _context.Usuarios.FindAsync(usuarioId);
+            if (usuario == null)
+                return null;
+
+            var categoria = await _context.Categorias.FindAsync(crearReporteDto.CategoriaId);
+            if (categoria == null)
+                return null;
+
+            var estado = await _context.Estados.FirstOrDefaultAsync(e => e.Nombre == ESTADO_INICIAL);
+            if (estado == null)
+            {
+                // Si no existe el estado "Pendiente", tomamos el primero como fallback o lanzamos error
+                estado = await _context.Estados.FirstOrDefaultAsync();
+                if (estado == null) return null;
+            }
+
+            var reporte = new Reporte
+            {
+                UsuarioId = usuarioId,
+                CategoriaId = crearReporteDto.CategoriaId,
+                EstadoId = estado.Id,
+                Descripcion = crearReporteDto.Descripcion,
+                DireccionTexto = crearReporteDto.DireccionTexto,
+                Latitud = crearReporteDto.Latitud,
+                Longitud = crearReporteDto.Longitud,
+                FechaCreacion = DateTime.UtcNow,
+                Usuario = usuario,
+                Categoria = categoria,
+                Estado = estado,
+                Fotos = new List<Foto>()
+            };
+
+            _context.Reportes.Add(reporte);
+            await _context.SaveChangesAsync();
+
+            // Retornamos directamente usando el objeto en memoria, evitando el segundo round-trip a la DB
+            return MapToDetalleDTO(reporte);
+        }
+
+        private ReporteResumenDTO MapToResumenDTO(Reporte r)
+        {
+            return new ReporteResumenDTO
             {
                 Id = r.Id,
                 UsuarioId = r.UsuarioId,
@@ -48,17 +128,11 @@ namespace rp_back.Services
                 EstadoId = r.EstadoId,
                 NombreEstado = r.Estado?.Nombre ?? "Sin estado",
                 TotalFotos = r.Fotos?.Count ?? 0
-            }).ToList();
+            };
         }
 
-        public async Task<ReporteDetalleDTO?> ObtenerReportePorIdAsync(int id)
+        private ReporteDetalleDTO MapToDetalleDTO(Reporte reporte, List<Historial>? historial = null)
         {
-            var reporte = await _context.Reportes.Include(r => r.Categoria).Include(r => r.Estado).Include(r => r.Fotos).FirstOrDefaultAsync(r => r.Id == id);
-            if (reporte == null)
-                return null;
-
-            var historial = await _context.Historiales.Include(h => h.Admin).Include(h => h.EstadoNuevo).Where(h => h.ReporteId == id).OrderByDescending(h => h.FechaCambio).ToListAsync();
-
             return new ReporteDetalleDTO
             {
                 Id = reporte.Id,
@@ -73,7 +147,7 @@ namespace rp_back.Services
                 EstadoId = reporte.EstadoId,
                 NombreEstado = reporte.Estado?.Nombre ?? "Sin estado",
                 Fotos = reporte.Fotos?.Select(f => new FotoDTO { Id = f.Id, Url = f.Url }).ToList() ?? new List<FotoDTO>(),
-                Historial = historial.Select(h => new HistorialDTO
+                Historial = historial?.Select(h => new HistorialDTO
                 {
                     Id = h.Id,
                     ReporteId = h.ReporteId,
@@ -83,80 +157,7 @@ namespace rp_back.Services
                     NombreEstadoNuevo = h.EstadoNuevo?.Nombre ?? "Estado desconocido",
                     Comentario = h.Comentario,
                     FechaCambio = h.FechaCambio
-                }).ToList()
-            };
-        }
-
-        public async Task<List<ReporteResumenDTO>> ObtenerReportesPorUsuarioAsync(Guid usuarioId)
-        {
-            var reportes = await _context.Reportes.Include(r => r.Categoria).Include(r => r.Estado).Include(r => r.Fotos).Where(r => r.UsuarioId == usuarioId).ToListAsync();
-
-            return reportes.Select(r => new ReporteResumenDTO
-            {
-                Id = r.Id,
-                UsuarioId = r.UsuarioId,
-                Descripcion = r.Descripcion,
-                DireccionTexto = r.DireccionTexto,
-                Latitud = r.Latitud,
-                Longitud = r.Longitud,
-                FechaCreacion = r.FechaCreacion,
-                CategoriaId = r.CategoriaId,
-                NombreCategoria = r.Categoria?.Nombre ?? "Sin categoría",
-                EstadoId = r.EstadoId,
-                NombreEstado = r.Estado?.Nombre ?? "Sin estado",
-                TotalFotos = r.Fotos?.Count ?? 0
-            }).ToList();
-        }
-
-        public async Task<ReporteDetalleDTO?> CrearReporteAsync(CrearReporteDTO crearReporteDto, Guid usuarioId)
-        {
-            var usuario = await _context.Usuarios.FindAsync(usuarioId);
-            if (usuario == null)
-                return null;
-
-            var categoria = await _context.Categorias.FindAsync(crearReporteDto.CategoriaId);
-            if (categoria == null)
-                return null;
-
-            var estado = await _context.Estados.FirstOrDefaultAsync(e => e.Id == 1);
-            if (estado == null)
-                return null;
-
-            var reporte = new Reporte
-            {
-                UsuarioId = usuarioId,
-                CategoriaId = crearReporteDto.CategoriaId,
-                EstadoId = estado.Id,
-                Descripcion = crearReporteDto.Descripcion,
-                DireccionTexto = crearReporteDto.DireccionTexto,
-                Latitud = crearReporteDto.Latitud,
-                Longitud = crearReporteDto.Longitud,
-                FechaCreacion = DateTime.UtcNow,
-                Usuario = usuario!,
-                Categoria = categoria!,
-                Estado = estado!
-            };
-
-            _context.Reportes.Add(reporte);
-            await _context.SaveChangesAsync();
-
-            var reporteCreado = await _context.Reportes.Include(r => r.Categoria).Include(r => r.Estado).Include(r => r.Fotos).FirstOrDefaultAsync(r => r.Id == reporte.Id) ?? throw new InvalidOperationException("No se pudo crear el reporte");
-
-            return new ReporteDetalleDTO
-            {
-                Id = reporteCreado.Id,
-                UsuarioId = reporteCreado.UsuarioId,
-                Descripcion = reporteCreado.Descripcion,
-                DireccionTexto = reporteCreado.DireccionTexto,
-                Latitud = reporteCreado.Latitud,
-                Longitud = reporteCreado.Longitud,
-                FechaCreacion = reporteCreado.FechaCreacion,
-                CategoriaId = reporteCreado.CategoriaId,
-                NombreCategoria = reporteCreado.Categoria?.Nombre ?? "Sin categoría",
-                EstadoId = reporteCreado.EstadoId,
-                NombreEstado = reporteCreado.Estado?.Nombre ?? "Sin estado",
-                Fotos = reporteCreado.Fotos?.Select(f => new FotoDTO { Id = f.Id, Url = f.Url }).ToList() ?? new List<FotoDTO>(),
-                Historial = new List<HistorialDTO>()
+                }).ToList() ?? new List<HistorialDTO>()
             };
         }
     }

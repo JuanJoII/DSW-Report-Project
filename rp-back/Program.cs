@@ -52,6 +52,7 @@ builder.Services.AddScoped<IReporteService, ReporteService>();
 builder.Services.AddScoped<IAdminReporteService, AdminReporteService>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<IFotoReporteService, FotoReporteService>();
+builder.Services.AddScoped<IEstadoService, EstadoService>();
 
 var app = builder.Build();
 
