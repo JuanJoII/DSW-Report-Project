@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using rp_back.Data;
 
@@ -11,9 +12,11 @@ using rp_back.Data;
 namespace rp_back.Migrations
 {
     [DbContext(typeof(ReportaSabanaDbContext))]
-    partial class ReportaSabanaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260504002623_AddValidations")]
+    partial class AddValidations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
