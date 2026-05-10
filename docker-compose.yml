@@ -10,6 +10,11 @@ services:
       - Jwt__Key=${JWT_KEY}
       - Jwt__Issuer=${JWT_ISSUER}
       - Jwt__Audience=${JWT_AUDIENCE}
+      - CloudflareR2__AccessKey=${R2_ACCESS_KEY}
+      - CloudflareR2__SecretKey=${R2_SECRET_KEY}
+      - CloudflareR2__BucketName=${R2_BUCKET_NAME}
+      - CloudflareR2__ServiceUrl=${R2_SERVICE_URL}
+      - CloudflareR2__PublicDomain=${R2_PUBLIC_DOMAIN}
     ports:
       - "8080:8080"
     depends_on:

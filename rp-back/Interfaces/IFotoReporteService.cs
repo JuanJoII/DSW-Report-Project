@@ -11,5 +11,6 @@ namespace rp_back.Interfaces
     {
         public Task<bool> FotoReporteAsync(CrearFotoReporteDTO dTo);
         public Task<IEnumerable<Foto>> ObtenerFotosPorReporteIdAsync(int reporteId);
+        Task<(string uploadUrl, string publicUrl)> GenerarUrlFirmadaAsync(string fileName);
     }
 }

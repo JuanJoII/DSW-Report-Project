@@ -79,16 +79,36 @@ export const actions = {
         });
 
         if (response.ok) {
-            // El backend parece devolver el objeto o a veces solo el ID o nada.
-            // Para evitar el error de parseo si viene vacío, verificamos el contenido.
             const text = await response.text();
+            console.log("DEBUG - Respuesta completa del backend:", text);
+            
             let result = {};
             try {
                 if (text) result = JSON.parse(text);
+                console.log("DEBUG - Objeto parseado:", result);
             } catch (e) {
-                console.log("Respuesta de reporte no es JSON, continuando...");
+                console.error("DEBUG - No se pudo parsear JSON:", e.message);
+                if (text && !isNaN(Number(text.trim()))) {
+                    const cleanId = text.trim();
+                    console.log("DEBUG - Usando texto plano como ID:", cleanId);
+                    throw redirect(303, `/reportes/nuevo/fotos/${cleanId}`);
+                }
             }
             
+            // Buscar el ID en el objeto o usar el resultado directamente si es un número/string
+            let reportId = null;
+            if (typeof result === 'object' && result !== null) {
+                reportId = result.id || result.Id || result.reporteId || result.ReporteId || (result.data && (result.data.id || result.data.Id));
+            } else if (typeof result === 'number' || (typeof result === 'string' && !isNaN(Number(result)))) {
+                reportId = result;
+            }
+            
+            if (reportId) {
+                console.log("DEBUG - ID encontrado:", reportId, ". Redirigiendo a fotos.");
+                throw redirect(303, `/reportes/nuevo/fotos/${reportId}`);
+            }
+            
+            console.warn("DEBUG - No se encontró ID en la respuesta. Tipo de result:", typeof result);
             throw redirect(303, `/reportes/mis-reportes`);
         } else {
             const error = await response.text();

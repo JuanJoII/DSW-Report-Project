@@ -38,5 +38,24 @@ namespace rp_back.Controllers
             var fotos = await _fotoReporteService.ObtenerFotosPorReporteIdAsync(reporteId);
             return Ok(fotos);
         }
+
+        [HttpGet("presignedUrl")]
+        public async Task<IActionResult> ObtenerUrlFirmada([FromQuery] string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                return BadRequest("El nombre del archivo es requerido.");
+            }
+
+            try
+            {
+                var (uploadUrl, publicUrl) = await _fotoReporteService.GenerarUrlFirmadaAsync(fileName);
+                return Ok(new { uploadUrl, publicUrl });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+            }
+        }
     }
 }

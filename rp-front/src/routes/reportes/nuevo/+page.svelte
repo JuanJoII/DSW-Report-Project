@@ -1,6 +1,7 @@
 <script lang="ts">
     import { Map, AddressSearch, CategorySearch } from "$lib/index";
     import { enhance } from "$app/forms";
+    import { goto } from "$app/navigation";
 
     let { data, form } = $props();
 
@@ -20,9 +21,13 @@
 
     const handleSubmit = () => {
         isSubmitting = true;
-        return async ({ update }) => {
+        return async ({ result, update }) => {
             isSubmitting = false;
-            await update();
+            if (result.type === 'redirect') {
+                goto(result.location);
+            } else {
+                await update();
+            }
         };
     };
 </script>
@@ -88,7 +93,7 @@
                 {#if isSubmitting}
                     Enviando reporte...
                 {:else}
-                    Publicar Reporte
+                    Siguiente
                 {/if}
             </button>
         </div>
