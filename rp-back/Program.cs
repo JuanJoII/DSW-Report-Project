@@ -50,6 +50,9 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IReporteService, ReporteService>();
 builder.Services.AddScoped<IAdminReporteService, AdminReporteService>();
+builder.Services.AddScoped<ICategoriaService, CategoriaService>();
+builder.Services.AddScoped<IFotoReporteService, FotoReporteService>();
+builder.Services.AddScoped<IEstadoService, EstadoService>();
 
 var app = builder.Build();
 
@@ -62,8 +65,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.MapControllers();
+app.UseAuthentication();
 app.UseAuthorization();
-// app.UseAuthentication();
 
 app.Use(async (context, next) =>
 {

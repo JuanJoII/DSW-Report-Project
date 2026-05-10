@@ -17,6 +17,10 @@
     <div class="nav-links">
       <ul class="main-menu">
         <li><a href="/">Inicio</a></li>
+        {#if user}
+          <li><a href="/reportes/nuevo">Crear Reporte</a></li>
+          <li><a href="/reportes/mis-reportes">Mis Reportes</a></li>
+        {/if}
       </ul>
 
       <div class="auth-section">
