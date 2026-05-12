@@ -21,6 +21,20 @@ namespace rp_back.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<EstadoReporte>().HasData(
+                new EstadoReporte { Id = 1, Nombre = "Pendiente" },
+                new EstadoReporte { Id = 2, Nombre = "En Proceso" },
+                new EstadoReporte { Id = 3, Nombre = "Resuelto" },
+                new EstadoReporte { Id = 4, Nombre = "Rechazado" }
+            );
+
+            modelBuilder.Entity<Categoria>().HasData(
+                new Categoria { Id = 1, Nombre = "Basura" },
+                new Categoria { Id = 2, Nombre = "Baches" },
+                new Categoria { Id = 3, Nombre = "Alumbrado" },
+                new Categoria { Id = 4, Nombre = "Servicios Públicos" }
+            );
+
             modelBuilder.Entity<Historial>()
                 .HasOne(h => h.Reporte)
                 .WithMany()
