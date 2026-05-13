@@ -14,5 +14,6 @@ namespace rp_back.Interfaces
             CrearReporteDTO crearReporteDto,
             Guid usuarioId
         );
+        Task<ReporteDetalleDTO?> CambiarEstadoAsync(int id, int estadoId, Guid adminId);
     }
 }

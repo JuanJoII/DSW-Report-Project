@@ -6,7 +6,8 @@ export async function load({ locals, fetch }) {
         throw redirect(303, '/login');
     }
 
-    const response = await fetch('http://backend:8080/api/Categorias/ListarTodas');
+    const backendUrl = process.env.BACKEND_URL || 'http://backend:8080';
+    const response = await fetch(`${backendUrl}/api/Categorias/ListarTodas`);
     
     let categorias = [];
     if (response.ok) {
@@ -34,6 +35,7 @@ export const actions = {
         }
 
         const accessToken = cookies.get('accessToken');
+        const backendUrl = process.env.BACKEND_URL || 'http://backend:8080';
         const headers = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${accessToken}`
@@ -41,7 +43,7 @@ export const actions = {
 
         // Si se especificó una nueva categoría
         if (categoriaId === "-1" && nuevaCategoriaNombre) {
-            const catResponse = await fetch('http://backend:8080/api/Categorias', {
+            const catResponse = await fetch(`${backendUrl}/api/Categorias`, {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({ nombre: nuevaCategoriaNombre })
@@ -53,7 +55,7 @@ export const actions = {
             } else if (catResponse.status === 409) {
                 // Si ya existe (conflicto), intentamos obtener todas y buscarla por nombre
                 // Aunque idealmente el componente ya debería manejar esto, es un fallback
-                const allCatsRes = await fetch('http://backend:8080/api/Categorias/ListarTodas');
+                const allCatsRes = await fetch(`${backendUrl}/api/Categorias/ListarTodas`);
                 const allCats = await allCatsRes.json();
                 const existing = allCats.find(c => c.nombre.toLowerCase() === nuevaCategoriaNombre.toLowerCase());
                 if (existing) categoriaId = existing.id;
@@ -66,7 +68,7 @@ export const actions = {
             return fail(400, { message: 'Debes seleccionar o crear una categoría' });
         }
 
-        const response = await fetch('http://backend:8080/api/Reportes', {
+        const response = await fetch(`${backendUrl}/api/Reportes`, {
             method: 'POST',
             headers,
             body: JSON.stringify({

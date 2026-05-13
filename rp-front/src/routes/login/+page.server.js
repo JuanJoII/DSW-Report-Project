@@ -12,7 +12,8 @@ export const actions = {
     }
 
     try {
-      const response = await fetch('http://backend:8080/api/Auth/Login', {
+      const backendUrl = process.env.BACKEND_URL || 'http://backend:8080';
+      const response = await fetch(`${backendUrl}/api/Auth/Login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })

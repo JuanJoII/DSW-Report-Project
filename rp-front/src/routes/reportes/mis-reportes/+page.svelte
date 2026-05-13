@@ -1,5 +1,6 @@
 <script lang="ts">
     let { data } = $props();
+    let reportes = $derived(data.reportes || []);
 
     function formatDate(dateString: string) {
         if (!dateString) return "Sin fecha";
@@ -28,7 +29,7 @@
         <a href="/reportes/nuevo" class="btn-new">Nuevo Reporte</a>
     </div>
 
-    {#if !data.reportes || data.reportes.length === 0}
+    {#if !reportes || reportes.length === 0}
         <div class="empty-state">
             <div class="icon">📋</div>
             <h2>Aún no tienes reportes</h2>
@@ -37,7 +38,7 @@
         </div>
     {:else}
         <div class="report-grid">
-            {#each data.reportes as reporte}
+            {#each reportes as reporte}
                 <div class="report-card">
                     <div class="card-header">
                         <span class="category">{reporte.nombreCategoria || 'Sin categoría'}</span>
@@ -45,7 +46,7 @@
                             {reporte.nombreEstado || 'Pendiente'}
                         </span>
                     </div>
-                    
+
                     <div class="card-body">
                         <p class="description">{reporte.descripcion}</p>
                         <div class="meta">
