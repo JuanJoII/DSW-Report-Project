@@ -2,7 +2,11 @@
     import { Map } from "$lib/index";
 
     let { data } = $props();
-    const { reporte } = data;
+    const { reporte, fromAdmin } = data;
+
+    // Determinar a dónde volver basado en fromAdmin
+    const backLink = fromAdmin ? '/admin' : '/reportes/mis-reportes';
+    const backLabel = fromAdmin ? '← Volver al panel admin' : '← Volver a mis reportes';
 
     function formatDate(dateString: string) {
         return new Date(dateString).toLocaleDateString('es-ES', {
@@ -26,7 +30,7 @@
 
 <div class="container">
     <div class="back-nav">
-        <a href="/reportes/mis-reportes" class="btn-back">← Volver a mis reportes</a>
+        <a href={backLink} class="btn-back">{backLabel}</a>
     </div>
 
     <div class="report-header">

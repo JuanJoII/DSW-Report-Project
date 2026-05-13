@@ -69,5 +69,30 @@ namespace rp_back.Controllers
 
             return CreatedAtAction(nameof(ObtenerReportePorId), new { id = reporte.Id }, reporte);
         }
+
+        [HttpPatch("{id}/estado/{estadoId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> CambiarEstado(int id, int estadoId)
+        {
+            var adminIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(adminIdString, out var adminId))
+            {
+                return Unauthorized("Admin no autenticado");
+            }
+
+            var reporte = await _reporteService.CambiarEstadoAsync(id, estadoId, adminId);
+            if (reporte == null)
+            {
+                return NotFound("Reporte o estado no encontrado");
+            }
+
+            // Devolver respuesta simplificada para evitar problemas de serialización
+            return Ok(new
+            {
+                id = reporte.Id,
+                estadoId = reporte.EstadoId,
+                nombreEstado = reporte.NombreEstado
+            });
+        }
     }
 }

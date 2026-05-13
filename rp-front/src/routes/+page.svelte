@@ -1,5 +1,6 @@
 <script lang="ts">
   let { data } = $props();
+  let isAdmin = $derived(data.user?.role?.toLowerCase() === 'admin');
 
   function formatDate(dateString: string) {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -29,32 +30,34 @@
   </div>
 </div>
 
-<section id="recientes" class="recent-reports">
-  <div class="section-header">
-    <h2>Reportes Recientes</h2>
-    <p>Lo que está pasando en la zona</p>
-  </div>
-
-  {#if data.reportesRecientes.length === 0}
-    <p class="empty-msg">No hay reportes recientes registrados.</p>
-  {:else}
-    <div class="report-list">
-      {#each data.reportesRecientes as reporte}
-        <div class="report-item">
-          <div class="report-info">
-            <div class="report-meta">
-              <span class="category">{reporte.nombreCategoria}</span>
-              <span class="date">{formatDate(reporte.fechaCreacion)}</span>
-            </div>
-            <h3>{reporte.descripcion}</h3>
-            <span class="status {getStatusClass(reporte.nombreEstado)}">{reporte.nombreEstado}</span>
-          </div>
-          <a href="/reportes/{reporte.id}" class="view-link">Detalles →</a>
-        </div>
-      {/each}
+{#if isAdmin}
+  <section id="recientes" class="recent-reports">
+    <div class="section-header">
+      <h2>📊 Reportes Recientes del Sistema</h2>
+      <p>Los últimos reportes enviados por usuarios</p>
     </div>
-  {/if}
-</section>
+
+    {#if data.reportesRecientes.length === 0}
+      <p class="empty-msg">No hay reportes recientes registrados.</p>
+    {:else}
+      <div class="report-list">
+        {#each data.reportesRecientes as reporte}
+          <div class="report-item">
+            <div class="report-info">
+              <div class="report-meta">
+                <span class="category">{reporte.nombreCategoria}</span>
+                <span class="date">{formatDate(reporte.fechaCreacion)}</span>
+              </div>
+              <h3>{reporte.descripcion}</h3>
+              <span class="status {getStatusClass(reporte.nombreEstado)}">{reporte.nombreEstado}</span>
+            </div>
+            <a href="/reportes/{reporte.id}" class="view-link">Detalles →</a>
+          </div>
+        {/each}
+      </div>
+    {/if}
+  </section>
+{/if}
 
 <style>
   .hero {

@@ -19,10 +19,10 @@ namespace rp_back.Models
         public virtual Reporte? Reporte { get; set; }
 
         [Required]
-        public Guid AdminId { get; set; } 
-        
+        public Guid AdminId { get; set; }
+
         [ForeignKey("AdminId")]
-        public virtual required Usuario Admin { get; set; }
+        public virtual Usuario? Admin { get; set; }
 
         [Required]
         public int EstadoNuevoId { get; set; }

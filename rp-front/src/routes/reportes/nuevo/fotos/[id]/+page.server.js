@@ -7,10 +7,11 @@ export async function load({ params, locals, fetch }) {
     }
 
     const { id } = params;
+    const backendUrl = process.env.BACKEND_URL || 'http://backend:8080';
     console.log("Cargando vista de fotos para reporte ID:", id);
 
     try {
-        const response = await fetch(`http://backend:8080/api/Reportes/${id}`);
+        const response = await fetch(`${backendUrl}/api/Reportes/${id}`);
         
         if (!response.ok) {
             console.error(`No se pudo obtener el detalle del reporte ${id}. Status: ${response.status}`);
@@ -37,8 +38,9 @@ export const actions = {
     getPresignedUrl: async ({ fetch, cookies, url: pageUrl }) => {
         const fileName = pageUrl.searchParams.get('fileName');
         const accessToken = cookies.get('accessToken');
+        const backendUrl = process.env.BACKEND_URL || 'http://backend:8080';
 
-        const response = await fetch(`http://backend:8080/api/FotoReporte/presignedUrl?fileName=${encodeURIComponent(fileName)}`, {
+        const response = await fetch(`${backendUrl}/api/FotoReporte/presignedUrl?fileName=${encodeURIComponent(fileName)}`, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`
             }
@@ -56,8 +58,9 @@ export const actions = {
         const formData = await request.formData();
         const url = formData.get('url');
         const accessToken = cookies.get('accessToken');
+        const backendUrl = process.env.BACKEND_URL || 'http://backend:8080';
 
-        const response = await fetch('http://backend:8080/api/FotoReporte', {
+        const response = await fetch(`${backendUrl}/api/FotoReporte`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

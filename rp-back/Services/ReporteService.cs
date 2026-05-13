@@ -112,6 +112,42 @@ namespace rp_back.Services
             return MapToDetalleDTO(reporte);
         }
 
+        public async Task<ReporteDetalleDTO?> CambiarEstadoAsync(int id, int estadoId, Guid adminId)
+        {
+            var reporte = await _context.Reportes
+                .Include(r => r.Categoria)
+                .Include(r => r.Estado)
+                .Include(r => r.Fotos)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (reporte == null)
+                return null;
+
+            var estado = await _context.Estados.FindAsync(estadoId);
+            if (estado == null)
+                return null;
+
+            reporte.EstadoId = estadoId;
+            await _context.SaveChangesAsync();
+
+            // Registrar el cambio en Historial
+            var historial = new Historial
+            {
+                ReporteId = id,
+                AdminId = adminId,
+                EstadoNuevoId = estadoId,
+                FechaCambio = DateTime.UtcNow
+            };
+            _context.Historiales.Add(historial);
+            await _context.SaveChangesAsync();
+
+            // CRÍTICO: Recargar el Estado para obtener el nombre correcto
+            // No puedes confiar en reporte.Estado después de cambiar EstadoId
+            await _context.Entry(reporte).Reference(r => r.Estado).LoadAsync();
+
+            return MapToDetalleDTO(reporte);
+        }
+
         private ReporteResumenDTO MapToResumenDTO(Reporte r)
         {
             return new ReporteResumenDTO

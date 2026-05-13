@@ -19,15 +19,13 @@ export async function handle({ event, resolve }) {
                 algorithms: ['HS512'],
             });
 
-            // console.log("JWT Payload:", payload);
-
             // 3. Extraemos claims, manejando los namespaces por defecto de .NET
-            const email = payload.email || 
-                          payload.sub || 
+            const email = payload.email ||
+                          payload.sub ||
                           payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
-            
-            const role = payload.role || 
-                         payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || 
+
+            const role = payload.role ||
+                         payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
                          "ciudadano";
 
             event.locals.user = {
@@ -36,16 +34,15 @@ export async function handle({ event, resolve }) {
                 role
             };
 
-            // console.log("Token válido para usuario:", event.locals.user.email, event.locals.user.role);
-
         } catch (error) {
             // Si el token fue manipulado (firma inválida) o expiró, cae aquí.
             console.error("Error validando token:", error.code);
 
             // Si el error es específicamente por expiración, intentamos refrescar
             if (error.code === 'ERR_JWT_EXPIRED' && refreshToken && userId) {
-                
-                const response = await event.fetch("http://backend:8080/api/Auth/RefreshTokens", {
+                const backendUrl = process.env.BACKEND_URL || 'http://backend:8080';
+
+                const response = await event.fetch(`${backendUrl}/api/Auth/RefreshTokens`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ userId, refreshToken }),
@@ -83,7 +80,7 @@ export async function handle({ event, resolve }) {
     }
 
     // Protección de rutas: Si la URL exige admin y el usuario no lo es, pa' fuera
-    if (event.url.pathname.startsWith("/admin") && event.locals.user?.role !== "admin") {
+    if (event.url.pathname.startsWith("/admin") && event.locals.user?.role?.toLowerCase() !== "admin") {
         throw redirect(303, "/login");
     }
 
