@@ -140,7 +140,7 @@
     margin-top: 8px;
     padding: 0;
     list-style: none;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 15px -3px var(--color-card-shadow);
     z-index: 2000;
     max-height: 300px;
     overflow-y: auto;

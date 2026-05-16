@@ -20,11 +20,11 @@
 
     function getStatusConfig(status: string) {
         const s = status?.toLowerCase() || '';
-        if (s.includes('pendiente')) return { class: 'bg-cyan-50 text-cyan-600 border-cyan-100', dot: 'bg-cyan-500' };
-        if (s.includes('revisión') || s.includes('proceso')) return { class: 'bg-amber-50 text-amber-600 border-amber-100', dot: 'bg-amber-500' };
-        if (s.includes('resuelto')) return { class: 'bg-emerald-50 text-emerald-600 border-emerald-100', dot: 'bg-emerald-500' };
-        if (s.includes('rechazado') || s.includes('error')) return { class: 'bg-red-50 text-red-600 border-red-100', dot: 'bg-red-500' };
-        return { class: 'bg-slate-50 text-slate-600 border-slate-100', dot: 'bg-slate-400' };
+        if (s.includes('pendiente')) return { class: 'bg-cyan-50 text-cyan-600 border-cyan-100 dark:bg-cyan-900/20 dark:text-cyan-400 dark:border-cyan-800', dot: 'bg-cyan-500' };
+        if (s.includes('revisión') || s.includes('proceso')) return { class: 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800', dot: 'bg-amber-500' };
+        if (s.includes('resuelto')) return { class: 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800', dot: 'bg-emerald-500' };
+        if (s.includes('rechazado') || s.includes('error')) return { class: 'bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800', dot: 'bg-red-500' };
+        return { class: 'bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-900/20 dark:text-slate-400 dark:border-slate-800', dot: 'bg-slate-400' };
     }
 
     const statusConfig = $derived(getStatusConfig(reporte.nombreEstado));
