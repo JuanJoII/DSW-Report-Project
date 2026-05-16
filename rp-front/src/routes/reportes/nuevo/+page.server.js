@@ -1,4 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ locals, fetch }) {
@@ -6,7 +7,7 @@ export async function load({ locals, fetch }) {
         throw redirect(303, '/login');
     }
 
-    const backendUrl = process.env.BACKEND_URL || 'http://backend:8080';
+    const backendUrl = env.BACKEND_URL;
     const response = await fetch(`${backendUrl}/api/Categorias/ListarTodas`);
     
     let categorias = [];
@@ -35,7 +36,7 @@ export const actions = {
         }
 
         const accessToken = cookies.get('accessToken');
-        const backendUrl = process.env.BACKEND_URL || 'http://backend:8080';
+        const backendUrl = env.BACKEND_URL;
         const headers = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${accessToken}`
@@ -53,8 +54,6 @@ export const actions = {
                 const newCat = await catResponse.json();
                 categoriaId = newCat.id;
             } else if (catResponse.status === 409) {
-                // Si ya existe (conflicto), intentamos obtener todas y buscarla por nombre
-                // Aunque idealmente el componente ya debería manejar esto, es un fallback
                 const allCatsRes = await fetch(`${backendUrl}/api/Categorias/ListarTodas`);
                 const allCats = await allCatsRes.json();
                 const existing = allCats.find(c => c.nombre.toLowerCase() === nuevaCategoriaNombre.toLowerCase());
@@ -82,22 +81,15 @@ export const actions = {
 
         if (response.ok) {
             const text = await response.text();
-            console.log("DEBUG - Respuesta completa del backend:", text);
-            
             let result = {};
             try {
                 if (text) result = JSON.parse(text);
-                console.log("DEBUG - Objeto parseado:", result);
             } catch (e) {
-                console.error("DEBUG - No se pudo parsear JSON:", e.message);
                 if (text && !isNaN(Number(text.trim()))) {
-                    const cleanId = text.trim();
-                    console.log("DEBUG - Usando texto plano como ID:", cleanId);
-                    throw redirect(303, `/reportes/nuevo/fotos/${cleanId}`);
+                    throw redirect(303, `/reportes/nuevo/fotos/${text.trim()}`);
                 }
             }
             
-            // Buscar el ID en el objeto o usar el resultado directamente si es un número/string
             let reportId = null;
             if (typeof result === 'object' && result !== null) {
                 reportId = result.id || result.Id || result.reporteId || result.ReporteId || (result.data && (result.data.id || result.data.Id));
@@ -106,11 +98,9 @@ export const actions = {
             }
             
             if (reportId) {
-                console.log("DEBUG - ID encontrado:", reportId, ". Redirigiendo a fotos.");
                 throw redirect(303, `/reportes/nuevo/fotos/${reportId}`);
             }
             
-            console.warn("DEBUG - No se encontró ID en la respuesta. Tipo de result:", typeof result);
             throw redirect(303, `/reportes/mis-reportes`);
         } else {
             const error = await response.text();

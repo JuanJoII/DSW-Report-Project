@@ -1,8 +1,8 @@
 <script>
+  import { fade } from 'svelte/transition';
   let { data } = $props();
   let reportes = $state(data.reportes || []);
   let error = $state(data.error || null);
-  let backendUrl = $state(data.backendUrl || 'http://backend:8080');
   let estadosDeLaDB = $state(data.estados || []);
 
   // Estados para filtros
@@ -65,14 +65,12 @@
 
   // Usar estados de la base de datos
   let estados = $derived.by(() => {
-    // Si tenemos estados de la BD, úsalos
     if (estadosDeLaDB && estadosDeLaDB.length > 0) {
       return estadosDeLaDB.map(e => ({
         id: e.id,
         nombre: e.nombre
       })).sort((a, b) => a.nombre.localeCompare(b.nombre));
     }
-    // Fallback: extraer de reportes si no hay BD
     const unique = [...new Set(reportes.map(r => r.estadoId))];
     return unique
       .map(id => ({
@@ -92,7 +90,6 @@
       .sort((a, b) => a.nombre.localeCompare(b.nombre));
   });
 
-  // Formatear fecha
   function formatFecha(fecha) {
     return new Date(fecha).toLocaleDateString('es-ES', {
       year: 'numeric',
@@ -101,12 +98,12 @@
     });
   }
 
-  // Estadísticas
   let stats = $derived.by(() => {
     return {
       total: reportes.length,
       filtrados: reportesFiltrados.length,
       porEstado: estados.map(e => ({
+        id: e.id,
         nombre: e.nombre,
         cantidad: reportes.filter(r => r.estadoId === e.id).length
       }))
@@ -125,7 +122,6 @@
   function abrirModalCambiarEstado(reporte) {
     reporteSeleccionado = reporte;
     nuevoEstado = reporte.estadoId;
-    // Usar estados de la BD si existen, sino usar los derivados
     estadosDisponibles = estadosDeLaDB && estadosDeLaDB.length > 0
       ? estadosDeLaDB.map(e => ({ id: e.id, nombre: e.nombre }))
       : estados;
@@ -157,12 +153,11 @@
       const result = await response.json();
 
       if (result.success) {
-        // Actualizar el reporte localmente
         const reporteIndex = reportes.findIndex(r => r.id === reporteSeleccionado.id);
         if (reporteIndex !== -1) {
           reportes[reporteIndex].estadoId = parseInt(nuevoEstado);
           reportes[reporteIndex].nombreEstado = estados.find(e => e.id === parseInt(nuevoEstado))?.nombre || 'Desconocido';
-          reportes = [...reportes]; // Trigger reactivity
+          reportes = [...reportes];
         }
         cerrarModal();
       } else {
@@ -173,528 +168,244 @@
       alert('Error de conexión al actualizar el estado');
     }
   }
+
+  function getStatusStyle(status) {
+    const s = status?.toLowerCase() || '';
+    if (s.includes('pendiente')) return 'bg-cyan-50 text-cyan-600 border-cyan-100';
+    if (s.includes('revisión') || s.includes('proceso')) return 'bg-amber-50 text-amber-600 border-amber-100';
+    if (s.includes('resuelto')) return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+    if (s.includes('rechazado') || s.includes('error')) return 'bg-red-50 text-red-600 border-red-100';
+    return 'bg-slate-50 text-slate-600 border-slate-100';
+  }
 </script>
 
-<div class="dashboard">
+<div class="space-y-8 animate-in fade-in duration-500">
   <!-- Estadísticas -->
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-number">{stats.total}</div>
-      <div class="stat-label">Reportes Totales</div>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-5">
+      <div class="w-14 h-14 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center text-slate-500 dark:text-slate-400">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Total Reportes</p>
+        <p class="text-3xl font-bold text-slate-900 dark:text-white font-jost">{stats.total}</p>
+      </div>
     </div>
-    {#each stats.porEstado as stat (stat.nombre)}
-      <div class="stat-card stat-secondary">
-        <div class="stat-number">{stat.cantidad}</div>
-        <div class="stat-label">{stat.nombre}</div>
+    
+    {#each stats.porEstado as stat}
+      <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-5">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center {getStatusStyle(stat.nombre)} dark:bg-opacity-10">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">{stat.nombre}</p>
+          <p class="text-3xl font-bold text-slate-900 dark:text-white font-jost">{stat.cantidad}</p>
+        </div>
       </div>
     {/each}
   </div>
 
   <!-- Controles de filtro -->
-  <div class="filter-section">
-    <div class="filter-group">
-      <label for="filtro-estado">Estado:</label>
-      <select id="filtro-estado" bind:value={filtroEstado}>
-        <option value="todos">Todos</option>
-        {#each estados as estado (estado.id)}
-          <option value={estado.id}>{estado.nombre}</option>
-        {/each}
-      </select>
-    </div>
+  <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
+    <div class="flex flex-wrap items-end gap-6">
+      <div class="flex-1 min-w-[300px] space-y-2">
+        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1" for="search">Búsqueda rápida</label>
+        <div class="relative group">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-sabana-violet dark:group-focus-within:text-sabana-lila transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input
+            id="search"
+            type="text"
+            placeholder="Buscar por descripción o dirección..."
+            class="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-900/50 border-transparent focus:bg-white dark:focus:bg-slate-900 focus:border-sabana-violet/30 dark:focus:border-sabana-violet/50 rounded-2xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-4 focus:ring-sabana-violet/5 transition-all outline-none border"
+            bind:value={busqueda}
+          />
+        </div>
+      </div>
 
-    <div class="filter-group">
-      <label for="filtro-categoria">Categoría:</label>
-      <select id="filtro-categoria" bind:value={filtroCategoria}>
-        <option value="todos">Todas</option>
-        {#each categorias as categoria (categoria.id)}
-          <option value={categoria.id}>{categoria.nombre}</option>
-        {/each}
-      </select>
-    </div>
-
-    <div class="filter-group search">
-      <input
-        type="text"
-        placeholder="Buscar en descripción o dirección..."
-        bind:value={busqueda}
-      />
-    </div>
-
-    <div class="filter-result">
-      Mostrando <strong>{reportesFiltrados.length}</strong> de <strong>{reportes.length}</strong>
-    </div>
-  </div>
-
-  <!-- Tabla de reportes -->
-  {#if error}
-    <div class="error-box">
-      <strong>Error:</strong> {error}
-    </div>
-  {:else if reportes.length === 0}
-    <div class="empty-state">
-      <p>No hay reportes en el sistema aún.</p>
-    </div>
-  {:else}
-    <div class="table-container">
-      <table class="reports-table">
-        <thead>
-          <tr>
-            <th onclick={() => toggleSort('fecha')} class:active={sortBy === 'fecha'}>
-              Fecha {sortBy === 'fecha' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
-            </th>
-            <th>Descripción</th>
-            <th>Dirección</th>
-            <th onclick={() => toggleSort('categoria')} class:active={sortBy === 'categoria'}>
-              Categoría {sortBy === 'categoria' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
-            </th>
-            <th onclick={() => toggleSort('estado')} class:active={sortBy === 'estado'}>
-              Estado {sortBy === 'estado' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
-            </th>
-            <th>Fotos</th>
-            <th>Usuario</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each reportesFiltrados as reporte (reporte.id)}
-            <tr class="clickable" onclick={() => window.location.href = `/reportes/${reporte.id}?from=admin`}>
-              <td class="fecha">{formatFecha(reporte.fechaCreacion)}</td>
-              <td class="descripcion" title={reporte.descripcion}>
-                {reporte.descripcion.substring(0, 50)}...
-              </td>
-              <td class="direccion" title={reporte.direccionTexto}>
-                {reporte.direccionTexto.substring(0, 35)}...
-              </td>
-              <td><span class="badge badge-categoria">{reporte.nombreCategoria}</span></td>
-              <td>
-                <span class="badge" class:badge-pendiente={reporte.nombreEstado === 'Pendiente'} class:badge-proceso={reporte.nombreEstado === 'En Proceso'} class:badge-resuelto={reporte.nombreEstado === 'Resuelto'} class:badge-rechazado={reporte.nombreEstado === 'Rechazado'}>
-                  {reporte.nombreEstado}
-                </span>
-              </td>
-              <td class="center">{reporte.totalFotos}</td>
-              <td class="usuario" title={reporte.usuarioId}>
-                {reporte.usuarioId.substring(0, 8)}...
-              </td>
-              <td class="acciones">
-                <button class="btn-cambiar-estado" onclick={(e) => { e.stopPropagation(); abrirModalCambiarEstado(reporte); }}>
-                  Cambiar
-                </button>
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
-  {/if}
-</div>
-
-<!-- Modal para cambiar estado -->
-{#if mostrarModal && reporteSeleccionado}
-  <div class="modal-overlay" onclick={cerrarModal}>
-    <div class="modal-content" onclick={(e) => e.stopPropagation()}>
-      <h2>Cambiar Estado del Reporte</h2>
-      <p class="modal-desc">{reporteSeleccionado.descripcion}</p>
-
-      <div class="form-group">
-        <label for="estado-select">Nuevo Estado:</label>
-        <select id="estado-select" bind:value={nuevoEstado}>
-          {#each estadosDisponibles as estado (estado.id)}
+      <div class="w-48 space-y-2">
+        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1" for="estado">Estado</label>
+        <select 
+          id="estado" 
+          bind:value={filtroEstado}
+          class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-900/50 border-transparent focus:bg-white dark:focus:bg-slate-900 focus:border-sabana-violet/30 dark:focus:border-sabana-violet/50 rounded-2xl text-slate-900 dark:text-white focus:ring-4 focus:ring-sabana-violet/5 transition-all outline-none border cursor-pointer"
+        >
+          <option value="todos">Todos los estados</option>
+          {#each estados as estado}
             <option value={estado.id}>{estado.nombre}</option>
           {/each}
         </select>
       </div>
 
-      <div class="modal-actions">
-        <button class="btn-cancelar" onclick={cerrarModal}>Cancelar</button>
-        <button class="btn-guardar" onclick={guardarCambioEstado}>Guardar</button>
+      <div class="w-48 space-y-2">
+        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1" for="categoria">Categoría</label>
+        <select 
+          id="categoria" 
+          bind:value={filtroCategoria}
+          class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-900/50 border-transparent focus:bg-white dark:focus:bg-slate-900 focus:border-sabana-violet/30 dark:focus:border-sabana-violet/50 rounded-2xl text-slate-900 dark:text-white focus:ring-4 focus:ring-sabana-violet/5 transition-all outline-none border cursor-pointer"
+        >
+          <option value="todos">Todas las categorías</option>
+          {#each categorias as categoria}
+            <option value={categoria.id}>{categoria.nombre}</option>
+          {/each}
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de reportes -->
+  <div class="bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+    <div class="px-8 py-6 border-b border-slate-50 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/30">
+      <p class="text-sm font-medium text-slate-500 dark:text-slate-400 font-onest">
+        Mostrando <span class="text-slate-900 dark:text-white font-bold">{reportesFiltrados.length}</span> reportes
+      </p>
+    </div>
+
+    {#if error}
+      <div class="p-12 text-center">
+        <div class="w-16 h-16 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+        </div>
+        <p class="text-red-600 dark:text-red-400 font-bold">{error}</p>
+      </div>
+    {:else if reportes.length === 0}
+      <div class="p-20 text-center">
+        <div class="w-20 h-20 bg-slate-50 dark:bg-slate-900/50 text-slate-300 dark:text-slate-700 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <p class="text-slate-400 dark:text-slate-500 text-lg">No hay reportes en el sistema aún.</p>
+      </div>
+    {:else}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 bg-slate-50/30 dark:bg-slate-900/50">
+              <th class="px-8 py-5 cursor-pointer hover:text-sabana-violet dark:hover:text-sabana-lila transition-colors" onclick={() => toggleSort('fecha')}>
+                Fecha {sortBy === 'fecha' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+              </th>
+              <th class="px-8 py-5">Descripción / Dirección</th>
+              <th class="px-8 py-5 cursor-pointer hover:text-sabana-violet dark:hover:text-sabana-lila transition-colors" onclick={() => toggleSort('categoria')}>
+                Categoría {sortBy === 'categoria' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+              </th>
+              <th class="px-8 py-5 cursor-pointer hover:text-sabana-violet dark:hover:text-sabana-lila transition-colors" onclick={() => toggleSort('estado')}>
+                Estado {sortBy === 'estado' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+              </th>
+              <th class="px-8 py-5 text-center">Fotos</th>
+              <th class="px-8 py-5 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-50 dark:divide-slate-700">
+            {#each reportesFiltrados as reporte}
+              <tr 
+                class="hover:bg-slate-50/80 dark:hover:bg-slate-700/50 transition-all cursor-pointer group" 
+                onclick={() => window.location.href = `/reportes/${reporte.id}?from=admin`}
+              >
+                <td class="px-8 py-6">
+                  <p class="text-sm font-bold text-slate-900 dark:text-white">{formatFecha(reporte.fechaCreacion)}</p>
+                  <p class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">ID: {reporte.id}</p>
+                </td>
+                <td class="px-8 py-6 max-w-md">
+                  <p class="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-sabana-violet dark:group-hover:text-sabana-lila transition-colors">{reporte.descripcion}</p>
+                  <div class="flex items-center gap-1.5 mt-1 text-slate-400 dark:text-slate-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span class="text-xs truncate">{reporte.direccionTexto}</span>
+                  </div>
+                </td>
+                <td class="px-8 py-6">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-3 py-1 bg-violet-50 dark:bg-violet-900/30 text-sabana-violet dark:text-sabana-lila rounded-lg border border-violet-100 dark:border-violet-800">
+                    {reporte.nombreCategoria}
+                  </span>
+                </td>
+                <td class="px-8 py-6">
+                  <span class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border {getStatusStyle(reporte.nombreEstado)} dark:bg-opacity-10">
+                    <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                    {reporte.nombreEstado}
+                  </span>
+                </td>
+                <td class="px-8 py-6 text-center">
+                  <div class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold">
+                    {reporte.totalFotos}
+                  </div>
+                </td>
+                <td class="px-8 py-6 text-right">
+                  <button 
+                    class="p-2 text-slate-400 dark:text-slate-500 hover:text-sabana-violet dark:hover:text-sabana-lila hover:bg-violet-50 dark:hover:bg-violet-900/30 rounded-xl transition-all"
+                    onclick={(e) => { e.stopPropagation(); abrirModalCambiarEstado(reporte); }}
+                    title="Cambiar estado"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22h6-12C4.4 22 3 20.6 3 19V7c0-1.6 1.4-3 3-3h5l2 3h7c1.6 0 3 1.4 3 3v4"/><path d="m17 19 2 2 4-4"/></svg>
+                  </button>
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    {/if}
+  </div>
+</div>
+
+<!-- Modal para cambiar estado -->
+{#if mostrarModal && reporteSeleccionado}
+  <div class="fixed inset-0 z-[100] flex items-center justify-center px-4" transition:fade={{ duration: 200 }}>
+    <div class="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-sm" onclick={cerrarModal}></div>
+    
+    <div class="relative bg-white dark:bg-slate-800 w-full max-w-md rounded-[2.5rem] shadow-2xl p-10 overflow-hidden animate-in zoom-in-95 duration-200">
+      <!-- Header -->
+      <div class="flex items-center gap-4 mb-8">
+        <div class="w-12 h-12 bg-violet-50 dark:bg-violet-900/30 text-sabana-violet dark:text-sabana-lila rounded-2xl flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22h6-12C4.4 22 3 20.6 3 19V7c0-1.6 1.4-3 3-3h5l2 3h7c1.6 0 3 1.4 3 3v4"/><path d="m17 19 2 2 4-4"/></svg>
+        </div>
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900 dark:text-white font-jost">Actualizar Estado</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400 font-onest">Reporte #{reporteSeleccionado.id}</p>
+        </div>
+      </div>
+
+      <p class="text-slate-600 dark:text-slate-300 mb-8 font-onest text-sm line-clamp-2 leading-relaxed italic">
+        "{reporteSeleccionado.descripcion}"
+      </p>
+
+      <div class="space-y-6">
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1" for="nuevo-estado">Selecciona la nueva fase</label>
+          <div class="grid grid-cols-1 gap-3">
+            {#each estadosDisponibles as estado}
+              <button 
+                class="flex items-center justify-between px-6 py-4 rounded-2xl border-2 transition-all font-bold text-sm {nuevoEstado === estado.id ? 'border-sabana-violet bg-violet-50 text-sabana-violet dark:bg-violet-900/30 dark:text-sabana-lila' : 'border-slate-50 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600'}"
+                onclick={() => nuevoEstado = estado.id}
+              >
+                {estado.nombre}
+                {#if nuevoEstado === estado.id}
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                {/if}
+              </button>
+            {/each}
+          </div>
+        </div>
+
+        <div class="flex gap-4 pt-4">
+          <button 
+            class="flex-1 px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors" 
+            onclick={cerrarModal}
+          >
+            Cancelar
+          </button>
+          <button 
+            class="flex-1 px-6 py-4 rounded-2xl bg-sabana-violet text-white font-bold shadow-lg shadow-violet-200 dark:shadow-none hover:bg-sabana-purple transition-all"
+            onclick={guardarCambioEstado}
+          >
+            Guardar Cambios
+          </button>
+        </div>
       </div>
     </div>
   </div>
 {/if}
 
 <style>
-  .dashboard {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-  }
-
-  /* Estadísticas */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
-  }
-
-  .stat-card {
-    background: #fff;
-    border-left: 4px solid var(--primary-color);
-    padding: 1.5rem;
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-
-  .stat-card.stat-secondary {
-    border-left-color: var(--secondary-color);
-  }
-
-  .stat-number {
-    font-size: 2rem;
-    font-weight: bold;
-    color: var(--primary-color);
-    margin-bottom: 0.5rem;
-  }
-
-  .stat-card.stat-secondary .stat-number {
-    color: var(--secondary-color);
-  }
-
-  .stat-label {
-    font-size: 0.85rem;
-    color: var(--secondary-color);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  /* Filtros */
-  .filter-section {
-    background: #fff;
-    padding: 1.5rem;
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .filter-group.search {
-    flex: 1;
-    min-width: 250px;
-  }
-
-  .filter-group label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-color);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .filter-group select,
-  .filter-group input {
-    padding: 0.6rem 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 0.9rem;
-    font-family: inherit;
-  }
-
-  .filter-group select:focus,
-  .filter-group input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
-  }
-
-  .filter-result {
-    align-self: flex-end;
-    font-size: 0.85rem;
-    color: var(--secondary-color);
-  }
-
-  /* Tabla */
-  .table-container {
-    background: #fff;
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    overflow-x: auto;
-  }
-
-  .reports-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-  }
-
-  .reports-table thead {
-    background: #f9fafb;
-    border-bottom: 2px solid var(--border-color);
-  }
-
-  .reports-table th {
-    padding: 1rem;
-    text-align: left;
-    font-weight: 600;
-    color: var(--text-color);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-size: 0.75rem;
-    cursor: pointer;
-    user-select: none;
-    transition: background 0.2s;
-  }
-
-  .reports-table th:hover {
-    background: #f0f0f5;
-  }
-
-  .reports-table th.active {
-    color: var(--primary-color);
-  }
-
-  .reports-table tbody tr {
-    border-bottom: 1px solid var(--border-color);
-    transition: background 0.2s;
-  }
-
-  .reports-table tbody tr.clickable {
-    cursor: pointer;
-  }
-
-  .reports-table tbody tr:hover {
-    background: #fafbfc;
-  }
-
-  .reports-table tbody tr.clickable:hover {
-    background: #f0f0f5;
-    border-bottom-color: var(--primary-color);
-  }
-
-  .reports-table td.acciones {
-    text-align: center;
-  }
-
-  .btn-cambiar-estado {
-    padding: 0.4rem 0.8rem;
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-
-  .btn-cambiar-estado:hover {
-    background: var(--primary-hover);
-  }
-
-  /* Modal */
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-
-  .modal-content {
-    background: white;
-    border-radius: 8px;
-    padding: 2rem;
-    max-width: 400px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  }
-
-  .modal-content h2 {
-    margin: 0 0 1rem 0;
-    font-size: 1.3rem;
-    color: var(--text-color);
-  }
-
-  .modal-desc {
-    margin: 0 0 1.5rem 0;
-    color: var(--secondary-color);
-    font-size: 0.9rem;
-    line-height: 1.5;
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .form-group label {
-    font-weight: 600;
-    color: var(--text-color);
-  }
-
-  .form-group select {
-    padding: 0.6rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 0.9rem;
-    font-family: inherit;
-  }
-
-  .form-group select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
-  }
-
-  .modal-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-  }
-
-  .btn-cancelar,
-  .btn-guardar {
-    padding: 0.6rem 1.2rem;
-    border: none;
-    border-radius: 4px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-cancelar {
-    background: #f3f4f6;
-    color: var(--text-color);
-  }
-
-  .btn-cancelar:hover {
-    background: #e5e7eb;
-  }
-
-  .btn-guardar {
-    background: var(--primary-color);
-    color: white;
-  }
-
-  .btn-guardar:hover {
-    background: var(--primary-hover);
-  }
-
-  .reports-table td {
-    padding: 0.875rem 1rem;
-    color: var(--text-color);
-  }
-
-  .reports-table td.fecha {
-    font-weight: 500;
-    color: var(--secondary-color);
-    font-size: 0.85rem;
-  }
-
-  .reports-table td.descripcion,
-  .reports-table td.direccion {
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .reports-table td.center {
-    text-align: center;
-    font-weight: 600;
-  }
-
-  .reports-table td.usuario {
-    font-size: 0.8rem;
-    color: var(--secondary-color);
-    font-family: 'Courier New', monospace;
-  }
-
-  /* Badges */
-  .badge {
-    display: inline-block;
-    padding: 0.35rem 0.75rem;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .badge-categoria {
-    background: #dbeafe;
-    color: #1e40af;
-  }
-
-  .badge-pendiente {
-    background: #fef3c7;
-    color: #92400e;
-  }
-
-  .badge-proceso {
-    background: #bfdbfe;
-    color: #1e3a8a;
-  }
-
-  .badge-resuelto {
-    background: #dcfce7;
-    color: #166534;
-  }
-
-  .badge-rechazado {
-    background: #fee2e2;
-    color: #991b1b;
-  }
-
-  /* Estados */
-  .error-box {
-    background: #fee2e2;
-    border: 1px solid #fca5a5;
-    color: #991b1b;
-    padding: 1rem;
-    border-radius: 6px;
-    margin-top: 1rem;
-  }
-
-  .empty-state {
-    background: #fff;
-    padding: 3rem 1.5rem;
-    border-radius: 6px;
-    text-align: center;
-    color: var(--secondary-color);
-  }
-
-  @media (max-width: 768px) {
-    .filter-section {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .filter-group.search {
-      min-width: auto;
-    }
-
-    .filter-result {
-      align-self: auto;
-    }
-
-    .reports-table {
-      font-size: 0.8rem;
-    }
-
-    .reports-table td {
-      padding: 0.625rem 0.75rem;
-    }
-
-    .reports-table th {
-      padding: 0.75rem;
-    }
-
-    .reports-table td.descripcion,
-    .reports-table td.direccion {
-      max-width: 120px;
-    }
+  @reference "../../app.css";
+  
+  :global(.animate-in) {
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 </style>

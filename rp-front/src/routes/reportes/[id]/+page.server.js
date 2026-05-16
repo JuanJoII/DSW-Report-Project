@@ -1,9 +1,10 @@
 import { error } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params, fetch, cookies, url }) {
     const accessToken = cookies.get('accessToken');
-    const backendUrl = process.env.BACKEND_URL || 'http://backend:8080';
+    const backendUrl = env.BACKEND_URL;
     const fromAdmin = url.searchParams.get('from') === 'admin';
 
     const response = await fetch(`${backendUrl}/api/Reportes/${params.id}`, {

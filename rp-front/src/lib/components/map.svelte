@@ -122,19 +122,6 @@
     </button>
   </div>
 
-  <div class="coords-panel">
-    <div class="coord-item">
-      <strong>Latitud:</strong>
-      <span>{latitud.toFixed(8)}</span>
-    </div>
-    <div class="coord-item">
-      <strong>Longitud:</strong>
-      <span>{longitud.toFixed(8)}</span>
-    </div>
-    {#if precisionGps}
-      <span class="badge">Precisión: ±{precisionGps.toFixed(1)}m</span>
-    {/if}
-  </div>
 </div>
 
 <style>
@@ -148,9 +135,12 @@
     height: 450px;
     width: 100%;
     border-radius: 12px;
-    border: 1px solid #ccc;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 6px -1px var(--color-card-shadow);
     z-index: 1;
+  }
+  :global(.dark) .canvas {
+    filter: grayscale(0.6) invert(0.9) hue-rotate(180deg) brightness(0.9);
   }
   .controls {
     position: absolute;
@@ -159,26 +149,27 @@
     z-index: 1000;
   }
   .btn-gps {
-    background: white;
-    border: 2px solid #4338ca;
-    color: #4338ca;
+    background: var(--color-bg-primary);
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
     padding: 8px 12px;
-    border-radius: 6px;
+    border-radius: 8px;
     font-weight: bold;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: all 0.2s;
+    font-family: var(--font-onest);
   }
   .btn-gps:hover {
-    background: #4338ca;
+    background: var(--primary-color);
     color: white;
   }
   .coords-panel {
     margin-top: 1rem;
     padding: 1rem;
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 8px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
     display: flex;
     flex-wrap: wrap;
     gap: 1.5rem;
@@ -186,6 +177,7 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
       "Liberation Mono", "Courier New", monospace;
     font-size: 0.9rem;
+    color: var(--text-color);
   }
   .coord-item {
     display: flex;
@@ -199,5 +191,10 @@
     font-size: 0.75rem;
     font-weight: 600;
     border: 1px solid #bbf7d0;
+  }
+  :global(.dark) .badge {
+    background: #064e3b;
+    color: #34d399;
+    border-color: #065f46;
   }
 </style>

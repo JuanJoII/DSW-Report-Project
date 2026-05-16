@@ -98,7 +98,7 @@
     </p>
 
     <div class="report-summary">
-        <strong>Reporte #{data.reporte.id}:</strong> {data.reporte.descripcion.substring(0, 100)}{data.reporte.descripcion.length > 100 ? '...' : ''}
+        <strong>Reporte #{data.reporte.id}:</strong> {data.reporte.descripcion?.substring(0, 100)}{data.reporte.descripcion?.length > 100 ? '...' : ''}
     </div>
 
     <div class="upload-card">
