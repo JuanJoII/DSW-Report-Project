@@ -1,4 +1,5 @@
 import { redirect } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ locals, fetch, cookies }) {
@@ -7,7 +8,7 @@ export async function load({ locals, fetch, cookies }) {
     }
 
     const accessToken = cookies.get('accessToken');
-    const backendUrl = process.env.BACKEND_URL || 'http://backend:8080';
+    const backendUrl = env.BACKEND_URL;
 
     // SIEMPRE traer solo los reportes del usuario logeado
     // (incluso si es admin, en esta vista ve solo los suyos)

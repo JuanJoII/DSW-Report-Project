@@ -13,6 +13,26 @@
     let descripcion = $state("");
     let isSubmitting = $state(false);
 
+    // Reverse Geocoding para obtener dirección desde coordenadas
+    async function reverseGeocode(lt: number, lg: number) {
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lt}&lon=${lg}`);
+            if (res.ok) {
+                const data = await res.json();
+                address = data.display_name;
+            }
+        } catch (e) {
+            console.error("Error en reverse geocoding:", e);
+        }
+    }
+
+    // Efecto para actualizar dirección cuando cambia la ubicación (por GPS o manual)
+    $effect(() => {
+        if (lat && lng) {
+            reverseGeocode(lat, lng);
+        }
+    });
+
     function handleAddressSelect(newLat: number, newLng: number, displayName: string) {
         lat = newLat;
         lng = newLng;
@@ -32,68 +52,119 @@
     };
 </script>
 
-<div class="report-container">
-    <h1>Crear Nuevo Reporte</h1>
-    <p class="subtitle">Cuéntanos qué está pasando y dónde. Tu reporte ayudará a mejorar nuestra comunidad.</p>
+<div class="max-w-4xl mx-auto space-y-12 pb-20 animate-in fade-in duration-500">
+    <div class="text-center space-y-4">
+        <h1 class="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white font-jost">Crear Nuevo Reporte</h1>
+        <p class="text-lg text-slate-500 dark:text-slate-400 font-onest max-w-2xl mx-auto leading-relaxed">
+            Tu reporte es el primer paso para una mejor ciudad. Cuéntanos qué sucede y dónde para que podamos actuar.
+        </p>
+    </div>
 
-    <form method="POST" use:enhance={handleSubmit} class="report-form">
+    <form method="POST" use:enhance={handleSubmit} class="space-y-10">
         {#if form?.message}
-            <div class="alert alert-error">
+            <div class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 rounded-2xl font-bold text-sm flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
                 {form.message}
             </div>
         {/if}
 
-        <div class="form-section">
-            <h2>1. Información del Problema</h2>
-            
-            <div class="form-group">
-                <label for="categoria">Categoría</label>
-                <CategorySearch 
-                    categorias={data.categorias} 
-                    bind:selectedId={catId} 
-                    bind:value={catValue} 
-                />
-            </div>
-
-            <div class="form-group">
-                <label for="descripcion">Descripción</label>
-                <textarea 
-                    id="descripcion" 
-                    name="descripcion" 
-                    bind:value={descripcion} 
-                    placeholder="Describe el problema detalladamente..." 
-                    rows="4" 
-                    required
-                ></textarea>
-            </div>
-        </div>
-
-        <div class="form-section">
-            <h2>2. Ubicación</h2>
-            <p class="form-help">Busca la dirección o mueve el marcador en el mapa para mayor precisión.</p>
-            
-            <div class="location-wrapper">
-                <AddressSearch onSelect={handleAddressSelect} />
+        <div class="bg-white dark:bg-slate-800 p-10 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-700 space-y-10">
+            <div class="space-y-8">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-violet-50 dark:bg-violet-900/30 text-sabana-violet dark:text-sabana-lila rounded-xl flex items-center justify-center font-bold font-jost text-lg">1</div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white font-jost">Información del Problema</h2>
+                </div>
                 
-                <input 
-                    type="hidden" 
-                    name="direccionTexto" 
-                    bind:value={address} 
-                />
+                <div class="space-y-6">
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1" for="categoria">Categoría del daño</label>
+                        <CategorySearch 
+                            categorias={data.categorias} 
+                            bind:selectedId={catId} 
+                            bind:value={catValue} 
+                        />
+                    </div>
 
-                <Map bind:latitud={lat} bind:longitud={lng} />
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1" for="descripcion">Descripción detallada</label>
+                        <textarea 
+                            id="descripcion" 
+                            name="descripcion" 
+                            bind:value={descripcion} 
+                            placeholder="Describe lo que sucede. Por ejemplo: 'Hay un bache profundo que afecta ambos carriles...'" 
+                            rows="5" 
+                            class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900/50 border-transparent focus:bg-white dark:focus:bg-slate-900 focus:border-sabana-violet/30 rounded-2xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-4 focus:ring-sabana-violet/5 transition-all outline-none border resize-none font-onest"
+                            required
+                        ></textarea>
+                    </div>
+                </div>
             </div>
-            
-            <input type="hidden" name="latitud" value={lat} />
-            <input type="hidden" name="longitud" value={lng} />
+
+            <div class="h-[1px] bg-slate-50 dark:bg-slate-700"></div>
+
+            <div class="space-y-8">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-violet-50 dark:bg-violet-900/30 text-sabana-violet dark:text-sabana-lila rounded-xl flex items-center justify-center font-bold font-jost text-lg">2</div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white font-jost">Ubicación Exacta</h2>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="space-y-4">
+                        <p class="text-sm text-slate-500 dark:text-slate-400 font-onest leading-relaxed">
+                            Busca la dirección o mueve el marcador azul en el mapa para indicar el punto exacto del inconveniente.
+                        </p>
+                        
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1" for="direccion-search">Buscar por dirección (Opcional)</label>
+                                <AddressSearch onSelect={handleAddressSelect} />
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1" for="direccionTexto">Confirmar Dirección</label>
+                                <input 
+                                    type="text" 
+                                    id="direccionTexto"
+                                    name="direccionTexto" 
+                                    bind:value={address} 
+                                    placeholder="La dirección se actualizará según el mapa..." 
+                                    class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900/50 border-transparent focus:bg-white dark:focus:bg-slate-900 focus:border-sabana-violet/30 rounded-2xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-4 focus:ring-sabana-violet/5 transition-all outline-none border font-onest"
+                                    required
+                                />
+                                <p class="text-[10px] text-slate-400 dark:text-slate-500 ml-1 italic">Puedes editar este campo si la dirección sugerida no es exacta.</p>
+                            </div>
+
+                            <div class="h-[400px] rounded-[2rem] overflow-hidden border-4 border-slate-50 dark:border-slate-900 relative group">
+                                <Map bind:latitud={lat} bind:longitud={lng} />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" name="latitud" value={lat} />
+                    <input type="hidden" name="longitud" value={lng} />
+                </div>
+            </div>
         </div>
 
-        <div class="form-actions">
-            <button type="submit" class="btn-submit" disabled={isSubmitting}>
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-6 bg-slate-900 dark:bg-slate-950 p-8 rounded-[2.5rem] text-white shadow-2xl">
+            <div class="space-y-1">
+                <p class="text-lg font-bold font-jost">¿Todo listo?</p>
+                <p class="text-sm text-slate-400 dark:text-slate-500 font-onest">Podrás añadir fotos en el siguiente paso.</p>
+            </div>
+            <button 
+                type="submit" 
+                class="w-full sm:w-auto px-10 py-5 bg-sabana-violet text-white rounded-2xl font-bold text-lg hover:bg-sabana-purple transition-all shadow-xl shadow-sabana-violet/20 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed" 
+                disabled={isSubmitting}
+            >
                 {#if isSubmitting}
-                    Enviando reporte...
+                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Procesando...
                 {:else}
                     Siguiente
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 {/if}
             </button>
         </div>
@@ -101,123 +172,8 @@
 </div>
 
 <style>
-    .report-container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding-bottom: 4rem;
-    }
+    @reference "../../../app.css";
 
-    h1 {
-        margin-bottom: 0.5rem;
-        color: #1a1a1a;
-    }
-
-    .subtitle {
-        color: #666;
-        margin-bottom: 2rem;
-    }
-
-    .report-form {
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-    }
-
-    .form-section {
-        background: #fff;
-        padding: 2rem;
-        border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        border: 1px solid #eee;
-    }
-
-    .form-section h2 {
-        font-size: 1.25rem;
-        margin-bottom: 1.5rem;
-        color: var(--primary-color);
-        border-bottom: 2px solid #f0f0f0;
-        padding-bottom: 0.5rem;
-    }
-
-    .form-group {
-        margin-bottom: 1.5rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .form-group label {
-        font-weight: 600;
-        font-size: 0.95rem;
-    }
-
-    .form-help {
-        font-size: 0.85rem;
-        color: #666;
-        margin-bottom: 1rem;
-    }
-
-    input[type="text"],
-    select,
-    textarea {
-        padding: 0.75rem 1rem;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-size: 1rem;
-        transition: border-color 0.2s;
-    }
-
-    input[type="text"]:focus,
-    select:focus,
-    textarea:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
-    }
-
-    .alert {
-        padding: 1rem;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-        font-weight: 500;
-    }
-
-    .alert-error {
-        background: #fee2e2;
-        color: #991b1b;
-        border: 1px solid #fecaca;
-    }
-
-    .form-actions {
-        display: flex;
-        justify-content: flex-end;
-    }
-
-    .btn-submit {
-        background: var(--primary-color);
-        color: white;
-        padding: 1rem 2rem;
-        border-radius: 8px;
-        font-weight: bold;
-        font-size: 1.1rem;
-        border: none;
-        cursor: pointer;
-        transition: background 0.2s;
-        width: 100%;
-    }
-
-    .btn-submit:hover {
-        background: var(--primary-hover);
-    }
-
-    .btn-submit:disabled {
-        background: #a5b4fc;
-        cursor: not-allowed;
-    }
-
-    @media (min-width: 640px) {
-        .btn-submit {
-            width: auto;
-        }
+    :global(.animate-in) {        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     }
 </style>

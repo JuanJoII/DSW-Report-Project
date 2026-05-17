@@ -1,9 +1,11 @@
+import { env } from '$env/dynamic/private';
+
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ fetch, locals, cookies }) {
     const userRole = locals.user?.role;
     const isAdmin = userRole?.toLowerCase() === 'admin';
     let reportesRecientes = [];
-    const backendUrl = process.env.BACKEND_URL || 'http://backend:8080';
+    const backendUrl = env.BACKEND_URL;
 
     // Solo admin ve los reportes recientes en home
     if (isAdmin) {

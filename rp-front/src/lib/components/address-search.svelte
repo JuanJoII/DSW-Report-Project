@@ -96,16 +96,20 @@
   .search-input {
     width: 100%;
     padding: 12px 16px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    font-size: 0.95rem;
+    background: var(--color-bg-secondary);
+    color: var(--text-color);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: border-color 0.2s;
+    transition: all 0.2s;
+    font-family: var(--font-onest);
   }
 
   .search-input:focus {
     outline: none;
-    border-color: #4338ca;
+    background: var(--color-bg-primary);
+    border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
   }
 
@@ -114,8 +118,8 @@
     right: 12px;
     width: 20px;
     height: 20px;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #4338ca;
+    border: 2px solid var(--color-bg-secondary);
+    border-top: 2px solid var(--primary-color);
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
@@ -130,20 +134,20 @@
     top: 100%;
     left: 0;
     right: 0;
-    background: white;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    margin-top: 4px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin-top: 8px;
     padding: 0;
     list-style: none;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    box-shadow: 0 10px 15px -3px var(--color-card-shadow);
     z-index: 2000;
     max-height: 300px;
     overflow-y: auto;
   }
 
   .results-list li {
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid var(--border-color);
   }
 
   .results-list li:last-child {
@@ -153,16 +157,18 @@
   .results-list button {
     width: 100%;
     text-align: left;
-    padding: 10px 16px;
+    padding: 12px 16px;
     background: none;
     border: none;
     font-size: 0.9rem;
+    color: var(--text-color);
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s;
+    font-family: var(--font-onest);
   }
 
   .results-list button:hover {
-    background: #f3f4f6;
-    color: #4338ca;
+    background: var(--color-bg-secondary);
+    color: var(--primary-color);
   }
 </style>

@@ -1,25 +1,90 @@
-/* Fix Leaflet icons when using CSS resets */
+@import "tailwindcss";
+
+/* Fontsource - Tipografías del Proyecto */
+@theme {
+  --font-jost: "Jost", sans-serif;
+  --font-onest: "Onest", sans-serif;
+
+  /* Colores Reporta Sabana - Atardecer en la Sabana */
+  --color-sabana-violet: #5B21B6; /* bg-violet-700 */
+  --color-sabana-purple: #4C1D95; /* bg-violet-900 */
+  --color-sabana-lila: #EDE9FE;   /* bg-violet-100 */
+  --color-sabana-orange: #EA580C; /* bg-orange-600 */
+  
+  /* Semántica de Estados */
+  --color-status-pending: #06B6D4;  /* Cian */
+  --color-status-review: #F59E0B;   /* Ámbar */
+  --color-status-resolved: #10B981; /* Esmeralda */
+  --color-status-rejected: #EF4444; /* Rojo */
+
+  /* Dark Mode support variables */
+  --color-bg-primary: white;
+  --color-bg-secondary: #f8fafc;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #64748b;
+  --color-border-primary: #e2e8f0;
+  --color-card-shadow: rgba(0, 0, 0, 0.1);
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+.dark {
+  --color-bg-primary: #0f172a;
+  --color-bg-secondary: #1e293b;
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-border-primary: #334155;
+  --color-card-shadow: rgba(0, 0, 0, 0.3);
+}
+
+/* Fix Leaflet icons when using CSS resets (Tailwind compatibility) */
 .leaflet-container img {
   max-width: none !important;
   display: inline !important;
 }
 
 :root {
-  --primary-color: #4338ca;
-  --primary-hover: #3730a3;
-  --secondary-color: #6b7280;
-  --error-color: #ef4444;
-  --bg-color: #f4f4f9;
-  --card-bg: #ffffff;
-  --text-color: #333;
-  --border-color: #ddd;
+  --primary-color: var(--color-sabana-violet);
+  --primary-hover: var(--color-sabana-purple);
+  --secondary-color: var(--color-text-secondary);
+  --error-color: var(--color-status-rejected);
+  --bg-color: var(--color-bg-secondary);
+  --card-bg: var(--color-bg-primary);
+  --text-color: var(--color-text-primary);
+  --border-color: var(--color-border-primary);
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-onest);
   background-color: var(--bg-color);
   color: var(--text-color);
-  line-height: 1.5;
+  line-height: 1.6;
   margin: 0;
   padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-jost);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+/* Custom Scrollbar for modern look */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

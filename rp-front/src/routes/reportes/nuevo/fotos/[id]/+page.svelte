@@ -98,7 +98,7 @@
     </p>
 
     <div class="report-summary">
-        <strong>Reporte #{data.reporte.id}:</strong> {data.reporte.descripcion.substring(0, 100)}{data.reporte.descripcion.length > 100 ? '...' : ''}
+        <strong>Reporte #{data.reporte.id}:</strong> {data.reporte.descripcion?.substring(0, 100)}{data.reporte.descripcion?.length > 100 ? '...' : ''}
     </div>
 
     <div class="upload-card">
@@ -161,10 +161,6 @@
             </div>
         </form>
     </div>
-    
-    <div class="info-note">
-        <p><strong>Información:</strong> Las imágenes se suben directamente a nuestro almacenamiento seguro (Cloudflare R2) y se asocian a tu reporte automáticamente.</p>
-    </div>
 </div>
 
 <style>
@@ -184,29 +180,30 @@
 
     h1 {
         margin-bottom: 0.5rem;
-        color: #1a1a1a;
+        color: var(--text-color);
     }
 
     .subtitle {
-        color: #666;
+        color: var(--secondary-color);
         margin-bottom: 2rem;
     }
 
     .report-summary {
-        background: #f8fafc;
+        background: var(--bg-color);
         padding: 1rem;
         border-radius: 8px;
         border-left: 4px solid var(--primary-color);
         margin-bottom: 2rem;
         font-size: 0.95rem;
+        color: var(--text-color);
     }
 
     .upload-card {
-        background: white;
+        background: var(--card-bg);
         padding: 2rem;
         border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        border: 1px solid #eee;
+        box-shadow: 0 4px 6px -1px var(--color-card-shadow);
+        border: 1px solid var(--border-color);
     }
 
     .file-input-wrapper {
@@ -229,15 +226,16 @@
         align-items: center;
         justify-content: center;
         padding: 3rem 2rem;
-        border: 2px dashed #cbd5e1;
+        border: 2px dashed var(--border-color);
         border-radius: 12px;
         cursor: pointer;
         transition: all 0.2s;
+        background: var(--bg-color);
     }
 
     .file-label:hover {
         border-color: var(--primary-color);
-        background: #f5f7ff;
+        background: color-mix(in srgb, var(--primary-color) 10%, transparent);
     }
 
     .file-label .icon {
@@ -248,12 +246,12 @@
     .file-label .text {
         font-weight: bold;
         font-size: 1.1rem;
-        color: #334155;
+        color: var(--text-color);
     }
 
     .file-label .help {
         font-size: 0.85rem;
-        color: #64748b;
+        color: var(--secondary-color);
         margin-top: 0.5rem;
     }
 
@@ -269,7 +267,7 @@
         aspect-ratio: 1;
         border-radius: 8px;
         overflow: hidden;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--border-color);
     }
 
     .preview-item img {
@@ -301,12 +299,12 @@
 
     .progress-container {
         margin-bottom: 2rem;
-        background: #f1f5f9;
+        background: var(--bg-color);
         height: 24px;
         border-radius: 12px;
         overflow: hidden;
         position: relative;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--border-color);
     }
 
     .progress-bar {
@@ -326,7 +324,7 @@
         justify-content: center;
         font-size: 0.75rem;
         font-weight: bold;
-        color: #334155;
+        color: var(--text-color);
     }
 
     .form-actions {
@@ -352,19 +350,20 @@
     }
 
     .btn-submit:disabled {
-        background: #cbd5e1;
+        background: var(--border-color);
+        color: var(--secondary-color);
         cursor: not-allowed;
     }
 
     .btn-skip {
-        color: #64748b;
+        color: var(--secondary-color);
         text-decoration: none;
         font-weight: 500;
         font-size: 0.95rem;
     }
 
     .btn-skip:hover {
-        color: #334155;
+        color: var(--text-color);
         text-decoration: underline;
     }
 
@@ -375,18 +374,8 @@
     }
 
     .alert-error {
-        background: #fee2e2;
-        color: #991b1b;
-        border: 1px solid #fecaca;
-    }
-
-    .info-note {
-        margin-top: 2rem;
-        padding: 1rem;
-        background: #f0fdf4;
-        border: 1px solid #dcfce7;
-        border-radius: 8px;
-        font-size: 0.85rem;
-        color: #166534;
+        background: color-mix(in srgb, var(--error-color) 15%, var(--card-bg));
+        color: var(--error-color);
+        border: 1px solid var(--error-color);
     }
 </style>

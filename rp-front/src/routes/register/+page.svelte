@@ -61,10 +61,10 @@
     padding: 2rem 0;
   }
   .auth-card {
-    background: white;
+    background: var(--color-bg-primary);
     padding: 2.5rem;
     border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px -1px var(--color-card-shadow);
     width: 100%;
     max-width: 450px;
     border: 1px solid var(--border-color);
@@ -73,7 +73,7 @@
     margin-top: 0;
     margin-bottom: 1.5rem;
     font-size: 1.5rem;
-    color: #111;
+    color: var(--text-color);
   }
   .auth-form {
     display: flex;
@@ -88,12 +88,15 @@
   label {
     font-size: 0.875rem;
     font-weight: 500;
+    color: var(--text-color);
   }
   input {
     padding: 0.625rem;
     border-radius: 8px;
     border: 1px solid var(--border-color);
     font-size: 0.9rem;
+    background: var(--color-bg-secondary);
+    color: var(--text-color);
   }
   input:focus {
     outline: none;

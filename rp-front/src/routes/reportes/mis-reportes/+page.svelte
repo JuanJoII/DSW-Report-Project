@@ -7,56 +7,74 @@
         return new Date(dateString).toLocaleDateString('es-ES', {
             year: 'numeric',
             month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            day: 'numeric'
         });
     }
 
-    function getStatusClass(status: string) {
-        if (!status) return 'status-default';
-        status = status.toLowerCase();
-        if (status.includes('pendiente')) return 'status-pending';
-        if (status.includes('revisión')) return 'status-review';
-        if (status.includes('resuelto')) return 'status-resolved';
-        return 'status-default';
+    function getStatusConfig(status: string) {
+        const s = status?.toLowerCase() || '';
+        if (s.includes('pendiente')) return { class: 'bg-cyan-50 text-cyan-600 border-cyan-100 dark:bg-cyan-900/20 dark:text-cyan-400 dark:border-cyan-800', dot: 'bg-cyan-500' };
+        if (s.includes('revisión') || s.includes('proceso')) return { class: 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800', dot: 'bg-amber-500' };
+        if (s.includes('resuelto')) return { class: 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800', dot: 'bg-emerald-500' };
+        if (s.includes('rechazado') || s.includes('error')) return { class: 'bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800', dot: 'bg-red-500' };
+        return { class: 'bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-900/20 dark:text-slate-400 dark:border-slate-800', dot: 'bg-slate-400' };
     }
 </script>
 
-<div class="container">
-    <div class="header">
-        <h1>Mis Reportes</h1>
-        <a href="/reportes/nuevo" class="btn-new">Nuevo Reporte</a>
+<div class="max-w-6xl mx-auto space-y-12 pb-20 animate-in fade-in duration-500">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div class="space-y-2">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white font-jost leading-tight">Mis Reportes</h1>
+            <p class="text-slate-500 dark:text-slate-400 font-onest text-lg">Sigue el progreso de tus contribuciones a la ciudad.</p>
+        </div>
+        <a href="/reportes/nuevo" class="group bg-sabana-violet text-white hover:bg-sabana-purple px-8 py-4 rounded-full text-lg font-bold transition-all shadow-xl shadow-violet-200 dark:shadow-none hover:scale-105 font-onest flex items-center gap-3">
+            Nuevo Reporte
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+        </a>
     </div>
 
     {#if !reportes || reportes.length === 0}
-        <div class="empty-state">
-            <div class="icon">📋</div>
-            <h2>Aún no tienes reportes</h2>
-            <p>Cuando crees un reporte, aparecerá aquí para que puedas seguir su estado.</p>
-            <a href="/reportes/nuevo" class="btn-primary">Crear mi primer reporte</a>
+        <div class="text-center py-24 bg-white dark:bg-slate-800 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-sm">
+            <div class="w-24 h-24 bg-slate-50 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-8 text-slate-300 dark:text-slate-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white font-jost mb-4">Aún no tienes reportes</h2>
+            <p class="text-slate-500 dark:text-slate-400 font-onest max-w-md mx-auto mb-10 leading-relaxed">
+                Cuando crees un reporte de algún daño en la vía pública, aparecerá aquí para que puedas seguir su estado de gestión.
+            </p>
+            <a href="/reportes/nuevo" class="inline-flex items-center gap-3 bg-violet-50 dark:bg-violet-900/30 text-sabana-violet dark:text-sabana-lila hover:bg-violet-100 dark:hover:bg-violet-900/50 px-10 py-5 rounded-full text-lg font-bold transition-all font-onest">
+                Crear mi primer reporte
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
         </div>
     {:else}
-        <div class="report-grid">
+        <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {#each reportes as reporte}
-                <div class="report-card">
-                    <div class="card-header">
-                        <span class="category">{reporte.nombreCategoria || 'Sin categoría'}</span>
-                        <span class="status {getStatusClass(reporte.nombreEstado)}">
+                {@const status = getStatusConfig(reporte.nombreEstado)}
+                <div class="bg-white dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-xl hover:shadow-violet-500/5 hover:-translate-y-1 transition-all group flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-6">
+                        <span class="text-xs font-bold text-sabana-violet dark:text-sabana-lila uppercase tracking-widest font-onest bg-violet-50 dark:bg-violet-900/30 px-3 py-1 rounded-lg">{reporte.nombreCategoria || 'Sin categoría'}</span>
+                        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium font-onest">{formatDate(reporte.fechaCreacion)}</span>
+                    </div>
+
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-6 font-jost group-hover:text-sabana-violet dark:group-hover:text-sabana-lila transition-colors flex-grow">
+                        {reporte.descripcion?.length > 80 ? reporte.descripcion.substring(0, 80) + '...' : (reporte.descripcion || '')}
+                    </h3>
+
+                    <div class="flex items-center gap-3 text-slate-500 dark:text-slate-400 mb-8 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100/50 dark:border-slate-700/50">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span class="text-sm font-onest truncate" title={reporte.direccionTexto}>{reporte.direccionTexto}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-auto pt-6 border-t border-slate-50 dark:border-slate-700">
+                        <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest font-onest border {status.class} dark:bg-opacity-10">
+                            <span class="w-1.5 h-1.5 rounded-full {status.dot}"></span>
                             {reporte.nombreEstado || 'Pendiente'}
                         </span>
-                    </div>
-
-                    <div class="card-body">
-                        <p class="description">{reporte.descripcion}</p>
-                        <div class="meta">
-                            <span class="date">📅 {formatDate(reporte.fechaCreacion)}</span>
-                            <span class="photos">📷 {reporte.totalFotos || 0} fotos</span>
-                        </div>
-                    </div>
-
-                    <div class="card-footer">
-                        <a href="/reportes/{reporte.id}" class="btn-detail">Ver detalle</a>
+                        
+                        <a href="/reportes/{reporte.id}" class="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-sabana-violet dark:hover:bg-sabana-purple hover:text-white transition-all shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                        </a>
                     </div>
                 </div>
             {/each}
@@ -65,25 +83,5 @@
 </div>
 
 <style>
-    /* ... (mismos estilos de antes) ... */
-    .container { max-width: 1000px; margin: 0 auto; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-    .btn-new { background: var(--primary-color); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; }
-    .report-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
-    .report-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border: 1px solid #eee; display: flex; flex-direction: column; }
-    .card-header { padding: 1rem; display: flex; justify-content: space-between; align-items: center; background: #f9fafb; border-bottom: 1px solid #f0f0f0; }
-    .category { font-weight: bold; color: var(--primary-color); font-size: 0.85rem; text-transform: uppercase; }
-    .status { font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 999px; text-transform: uppercase; }
-    .status-pending { background: #fef3c7; color: #92400e; }
-    .status-review { background: #e0e7ff; color: #3730a3; }
-    .status-resolved { background: #d1fae5; color: #065f46; }
-    .status-default { background: #f3f4f6; color: #374151; }
-    .card-body { padding: 1.25rem; flex-grow: 1; }
-    .description { margin: 0 0 1rem 0; font-size: 0.95rem; color: #374151; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-    .meta { display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.8rem; color: #6b7280; }
-    .card-footer { padding: 1rem; border-top: 1px solid #f0f0f0; }
-    .btn-detail { display: block; text-align: center; padding: 0.5rem; background: #f3f4f6; color: #374151; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; }
-    .empty-state { text-align: center; padding: 4rem 2rem; background: white; border-radius: 12px; border: 2px dashed #ddd; }
-    .empty-state .icon { font-size: 4rem; margin-bottom: 1rem; }
-    .btn-primary { display: inline-block; background: var(--primary-color); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; }
+    @reference "../../../app.css";
 </style>

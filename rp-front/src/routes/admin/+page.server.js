@@ -1,3 +1,5 @@
+import { env } from '$env/dynamic/private';
+
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ fetch, locals, cookies }) {
   // Verificar que el usuario sea admin (redundancia de seguridad)
@@ -9,7 +11,7 @@ export async function load({ fetch, locals, cookies }) {
   }
 
   const accessToken = cookies.get('accessToken');
-  const backendUrl = process.env.BACKEND_URL || 'http://backend:8080';
+  const backendUrl = env.BACKEND_URL;
 
   try {
     // Obtener TODOS los reportes del sistema
@@ -22,40 +24,43 @@ export async function load({ fetch, locals, cookies }) {
     });
 
     if (!response.ok) {
-      throw new Error(`Error: ${response.status}`);
+      console.error(`Error en API Reportes: ${response.status}`);
+      throw new Error(`Error del servidor: ${response.status}`);
     }
 
     const reportes = await response.json();
     const reportesArray = Array.isArray(reportes) ? reportes : (reportes.reportes || reportes.data || []);
 
     // Obtener todos los estados disponibles
-    const estadosResponse = await fetch(`${backendUrl}/api/Estados/ListarTodos`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-      }
-    });
-
     let estadosArray = [];
-    if (estadosResponse.ok) {
-      const estados = await estadosResponse.json();
-      estadosArray = Array.isArray(estados) ? estados : (estados.estados || estados.data || []);
+    try {
+      const estadosResponse = await fetch(`${backendUrl}/api/Estados/ListarTodos`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+
+      if (estadosResponse.ok) {
+        const estados = await estadosResponse.json();
+        estadosArray = Array.isArray(estados) ? estados : (estados.estados || estados.data || []);
+      }
+    } catch (eError) {
+      console.error('Error fetching estados:', eError);
     }
 
     return {
       reportes: reportesArray,
       estados: estadosArray,
-      error: null,
-      backendUrl: backendUrl
+      error: null
     };
   } catch (error) {
-    console.error('Error fetching reportes:', error);
+    console.error('Error loading admin page data:', error);
     return {
       reportes: [],
       estados: [],
-      error: 'Error al cargar los reportes: ' + error.message,
-      backendUrl: backendUrl
+      error: 'Error al cargar los datos: ' + error.message
     };
   }
 }
@@ -67,7 +72,7 @@ export const actions = {
     const reporteId = data.get('reporteId');
     const estadoId = data.get('estadoId');
     const accessToken = cookies.get('accessToken');
-    const backendUrl = process.env.BACKEND_URL || 'http://backend:8080';
+    const backendUrl = env.BACKEND_URL;
 
     console.log('Action cambiarEstado - reporteId:', reporteId, 'estadoId:', estadoId);
     console.log('Token disponible:', !!accessToken);

@@ -1,4 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 
 /** @type {import('./$types').Actions} */
 export const actions = {
@@ -16,7 +17,7 @@ export const actions = {
     }
 
     try {
-      const backendUrl = process.env.BACKEND_URL || 'http://backend:8080';
+      const backendUrl = env.BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/Auth/Register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
