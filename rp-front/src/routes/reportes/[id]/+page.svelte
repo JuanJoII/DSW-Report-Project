@@ -28,6 +28,28 @@
     }
 
     const statusConfig = $derived(getStatusConfig(reporte.nombreEstado));
+
+    // Estado para expandibles del historial
+    let expandidos = $state(new Set());
+
+    function toggleExpandir(id) {
+        if (expandidos.has(id)) {
+            expandidos.delete(id);
+        } else {
+            expandidos.add(id);
+        }
+        expandidos = new Set(expandidos);
+    }
+
+    // DEBUG: Mostrar el historial completo en consola
+    $effect(() => {
+        if (reporte.historial && reporte.historial.length > 0) {
+            console.log('[DEBUG] Historial recibido:', JSON.stringify(reporte.historial, null, 2));
+            reporte.historial.forEach((h, idx) => {
+                console.log(`[DEBUG] Item ${idx}: estado=${h.nombreEstadoNuevo}, comentario='${h.comentario}'`);
+            });
+        }
+    });
 </script>
 
 <div class="max-w-6xl mx-auto space-y-8 pb-20 animate-in fade-in duration-500">
@@ -117,8 +139,10 @@
                 
                 {#if reporte.historial && reporte.historial.length > 0}
                     <div class="space-y-10 relative before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100 dark:before:bg-slate-700">
-                        {#each reporte.historial as h}
+                        {#each reporte.historial as h, idx}
                             {@const hStatus = getStatusConfig(h.nombreEstadoNuevo)}
+                            {@const tieneComentario = h.comentario && h.comentario.trim() !== ''}
+                            {@const estaExpandido = expandidos.has(idx)}
                             <div class="relative pl-10 group">
                                 <div class="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-white dark:bg-slate-800 border-4 border-slate-100 dark:border-slate-700 z-10 group-hover:border-sabana-violet dark:group-hover:border-sabana-lila transition-colors"></div>
                                 <div class="space-y-3 p-6 rounded-3xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100/50 dark:border-slate-700/50 group-hover:bg-white dark:group-hover:bg-slate-800 group-hover:shadow-md transition-all">
@@ -127,12 +151,31 @@
                                             <span class="w-1.5 h-1.5 rounded-full {hStatus.dot}"></span>
                                             {h.nombreEstadoNuevo}
                                         </span>
-                                        <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{formatDate(h.fechaCambio)}</span>
+                                        <div class="flex items-center gap-3">
+                                            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{formatDate(h.fechaCambio)}</span>
+                                            {#if tieneComentario}
+                                                <button
+                                                    class="text-slate-400 dark:text-slate-500 hover:text-sabana-violet dark:hover:text-sabana-lila transition-colors cursor-pointer"
+                                                    onclick={() => toggleExpandir(idx)}
+                                                    title={estaExpandido ? 'Contraer comentario' : 'Ver comentario'}
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                        {#if estaExpandido}
+                                                            <polyline points="18 15 12 9 6 15"></polyline>
+                                                        {:else}
+                                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                                        {/if}
+                                                    </svg>
+                                                </button>
+                                            {/if}
+                                        </div>
                                     </div>
-                                    {#if h.comentario}
-                                        <p class="text-sm text-slate-600 dark:text-slate-400 font-onest leading-relaxed">
-                                            {h.comentario}
-                                        </p>
+                                    {#if tieneComentario && estaExpandido}
+                                        <div class="pt-3 border-t border-slate-200 dark:border-slate-600">
+                                            <p class="text-sm text-slate-600 dark:text-slate-300 font-onest leading-relaxed italic">
+                                                {h.comentario}
+                                            </p>
+                                        </div>
                                     {/if}
                                 </div>
                             </div>

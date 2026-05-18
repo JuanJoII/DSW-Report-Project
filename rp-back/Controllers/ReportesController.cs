@@ -72,27 +72,69 @@ namespace rp_back.Controllers
 
         [HttpPatch("{id}/estado/{estadoId}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> CambiarEstado(int id, int estadoId)
+        public async Task<ActionResult> CambiarEstado(int id, int estadoId, [FromBody] ComentarioRequest? request = null)
         {
-            var adminIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(adminIdString, out var adminId))
-            {
-                return Unauthorized("Admin no autenticado");
-            }
 
-            var reporte = await _reporteService.CambiarEstadoAsync(id, estadoId, adminId);
-            if (reporte == null)
+            try
             {
-                return NotFound("Reporte o estado no encontrado");
-            }
+                // Obtener comentario del body si existe
+                string? comentario = request?.comentario;
 
-            // Devolver respuesta simplificada para evitar problemas de serialización
-            return Ok(new
+                // DEBUG
+                Console.WriteLine($"[DEBUG] CambiarEstado - id: {id}, estadoId: {estadoId}, comentario: '{comentario}'");
+                Console.WriteLine($"[DEBUG] request es null: {request == null}, comentario es null: {comentario == null}");
+
+                // ✅ VALIDACIONES DENTRO del try-catch
+                var adminIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!Guid.TryParse(adminIdString, out var adminId))
+                {
+                    return Unauthorized(new
+                    {
+                        success = false,
+                        error = "Admin no autenticado",
+                        reporte = (object?)null
+                    });
+                }
+
+                var reporte = await _reporteService.CambiarEstadoAsync(id, estadoId, adminId, comentario);
+                if (reporte == null)
+                {
+                    return NotFound(new
+                    {
+                        success = false,
+                        error = "Reporte o estado no encontrado",
+                        reporte = (object?)null
+                    });
+                }
+
+                // ✅ Retorno exitoso con estructura correcta
+                return Ok(new
+                {
+                    success = true,
+                    error = (string?)null,
+                    reporte = new
+                    {
+                        id = reporte.Id,
+                        estadoId = reporte.EstadoId,
+                        nombreEstado = reporte.NombreEstado
+                    }
+                });
+            }
+            catch (Exception ex)
             {
-                id = reporte.Id,
-                estadoId = reporte.EstadoId,
-                nombreEstado = reporte.NombreEstado
-            });
+                return StatusCode(500, new
+                {
+                    success = false,
+                    error = "Error al cambiar estado: " + ex.Message,
+                    reporte = (object?)null
+                });
+            }
         }
+    }
+
+    // DTO para recibir comentario en el body
+    public class ComentarioRequest
+    {
+        public string? comentario { get; set; }
     }
 }

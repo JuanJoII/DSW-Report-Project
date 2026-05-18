@@ -2,7 +2,12 @@ import { error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 
 /** @type {import('./$types').PageServerLoad} */
-export async function load({ params, fetch, cookies, url }) {
+export async function load({ params, fetch, cookies, url, setHeaders }) {
+    // Deshabilitar cache para que siempre traiga datos frescos
+    setHeaders({
+        'cache-control': 'no-store, max-age=0'
+    });
+
     const accessToken = cookies.get('accessToken');
     const backendUrl = env.BACKEND_URL;
     const fromAdmin = url.searchParams.get('from') === 'admin';

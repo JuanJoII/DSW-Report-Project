@@ -17,6 +17,7 @@
   let reporteSeleccionado = $state(null);
   let nuevoEstado = $state(null);
   let estadosDisponibles = $state([]);
+  let comentario = $state(''); // ← NUEVO: Campo para comentario
 
   // Derivadas para datos filtrados
   let reportesFiltrados = $derived.by(() => {
@@ -122,6 +123,7 @@
   function abrirModalCambiarEstado(reporte) {
     reporteSeleccionado = reporte;
     nuevoEstado = reporte.estadoId;
+    comentario = ''; // ← NUEVO: Limpiar comentario
     estadosDisponibles = estadosDeLaDB && estadosDeLaDB.length > 0
       ? estadosDeLaDB.map(e => ({ id: e.id, nombre: e.nombre }))
       : estados;
@@ -132,6 +134,7 @@
     mostrarModal = false;
     reporteSeleccionado = null;
     nuevoEstado = null;
+    comentario = ''; // ← NUEVO: Limpiar comentario
   }
 
   async function guardarCambioEstado() {
@@ -144,6 +147,7 @@
       const formData = new FormData();
       formData.append('reporteId', reporteSeleccionado.id);
       formData.append('estadoId', nuevoEstado);
+      formData.append('comentario', comentario); // ← NUEVO: Enviar comentario
 
       const response = await fetch('?/cambiarEstado', {
         method: 'POST',
@@ -152,7 +156,10 @@
 
       const result = await response.json();
 
-      if (result.success) {
+      // Considerar exitoso si success === true O si no hay error
+      const esExitoso = result.success === true || !result.error;
+
+      if (esExitoso) {
         const reporteIndex = reportes.findIndex(r => r.id === reporteSeleccionado.id);
         if (reporteIndex !== -1) {
           reportes[reporteIndex].estadoId = parseInt(nuevoEstado);
@@ -381,6 +388,28 @@
               </button>
             {/each}
           </div>
+        </div>
+
+        <!-- NUEVO: Campo de comentario -->
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1" for="comentario">
+            Comentario <span class="font-normal text-slate-500">(opcional)</span>
+          </label>
+          <textarea
+            id="comentario"
+            class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-transparent
+              focus:bg-white dark:focus:bg-slate-900 focus:border-sabana-violet/30
+              dark:focus:border-sabana-violet/50 rounded-2xl text-slate-900 dark:text-white
+              placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-4
+              focus:ring-sabana-violet/5 transition-all outline-none font-onest resize-none"
+            placeholder="Describe el motivo del cambio..."
+            maxlength="1000"
+            rows="3"
+            bind:value={comentario}
+          ></textarea>
+          <p class="text-xs text-slate-400 dark:text-slate-500 text-right font-onest">
+            {comentario?.length || 0}/1000
+          </p>
         </div>
 
         <div class="flex gap-4 pt-4">
