@@ -112,40 +112,56 @@ namespace rp_back.Services
             return MapToDetalleDTO(reporte);
         }
 
-        public async Task<ReporteDetalleDTO?> CambiarEstadoAsync(int id, int estadoId, Guid adminId)
+        public async Task<ReporteDetalleDTO?> CambiarEstadoAsync(int id, int estadoId, Guid adminId, string? comentario = null)
         {
-            var reporte = await _context.Reportes
-                .Include(r => r.Categoria)
-                .Include(r => r.Estado)
-                .Include(r => r.Fotos)
-                .FirstOrDefaultAsync(r => r.Id == id);
-
-            if (reporte == null)
-                return null;
-
-            var estado = await _context.Estados.FindAsync(estadoId);
-            if (estado == null)
-                return null;
-
-            reporte.EstadoId = estadoId;
-            await _context.SaveChangesAsync();
-
-            // Registrar el cambio en Historial
-            var historial = new Historial
+            try
             {
-                ReporteId = id,
-                AdminId = adminId,
-                EstadoNuevoId = estadoId,
-                FechaCambio = DateTime.UtcNow
-            };
-            _context.Historiales.Add(historial);
-            await _context.SaveChangesAsync();
+                var reporte = await _context.Reportes
+                    .Include(r => r.Categoria)
+                    .Include(r => r.Estado)
+                    .Include(r => r.Fotos)
+                    .FirstOrDefaultAsync(r => r.Id == id);
 
-            // CRÍTICO: Recargar el Estado para obtener el nombre correcto
-            // No puedes confiar en reporte.Estado después de cambiar EstadoId
-            await _context.Entry(reporte).Reference(r => r.Estado).LoadAsync();
+                if (reporte == null)
+                    return null;
 
-            return MapToDetalleDTO(reporte);
+                var estado = await _context.Estados.FindAsync(estadoId);
+                if (estado == null)
+                    return null;
+
+                reporte.EstadoId = estadoId;
+                await _context.SaveChangesAsync();
+
+                // Registrar el cambio en Historial con comentario (solo si tiene contenido)
+                var historialEntry = new Historial
+                {
+                    ReporteId = id,
+                    AdminId = adminId,
+                    EstadoNuevoId = estadoId,
+                    Comentario = string.IsNullOrWhiteSpace(comentario) ? null : comentario.Trim(), // ← Solo guardar si tiene contenido
+                    FechaCambio = DateTime.UtcNow
+                };
+                _context.Historiales.Add(historialEntry);
+                await _context.SaveChangesAsync();
+
+                // CRÍTICO: Recargar el Estado para obtener el nombre correcto
+                await _context.Entry(reporte).Reference(r => r.Estado).LoadAsync();
+
+                // Obtener el historial completo actualizado para retornar
+                var historialCompleto = await _context.Historiales
+                    .Include(h => h.Admin)
+                    .Include(h => h.EstadoNuevo)
+                    .Where(h => h.ReporteId == id)
+                    .OrderByDescending(h => h.FechaCambio)
+                    .ToListAsync();
+
+                return MapToDetalleDTO(reporte, historialCompleto);
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"Error en CambiarEstadoAsync: {ex.Message}\n{ex.StackTrace}");
+                throw;
+            }
         }
 
         private ReporteResumenDTO MapToResumenDTO(Reporte r)

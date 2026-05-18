@@ -71,10 +71,11 @@ export const actions = {
     const data = await request.formData();
     const reporteId = data.get('reporteId');
     const estadoId = data.get('estadoId');
+    const comentario = data.get('comentario') || ''; // ← NUEVO: Obtener comentario
     const accessToken = cookies.get('accessToken');
     const backendUrl = env.BACKEND_URL;
 
-    console.log('Action cambiarEstado - reporteId:', reporteId, 'estadoId:', estadoId);
+    console.log('Action cambiarEstado - reporteId:', reporteId, 'estadoId:', estadoId, 'comentario:', comentario.substring(0, 50));
     console.log('Token disponible:', !!accessToken);
 
     if (!reporteId || !estadoId) {
@@ -94,7 +95,8 @@ export const actions = {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`
-        }
+        },
+        body: JSON.stringify({ comentario: comentario.trim() || null }) // ← NUEVO: Enviar comentario en body
       });
 
       console.log('Response status:', response.status);
@@ -117,7 +119,7 @@ export const actions = {
       }
 
       console.log('Cambio exitoso:', result);
-      return { success: true, reporte: result };
+      return result;
     } catch (error) {
       console.error('Error al cambiar estado:', error);
       return { success: false, error: error.message || 'Error desconocido al cambiar el estado' };

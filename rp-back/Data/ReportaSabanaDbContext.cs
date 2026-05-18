@@ -47,6 +47,12 @@ namespace rp_back.Data
                 .HasForeignKey(h => h.AdminId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<Historial>()
+                .HasOne(h => h.EstadoNuevo)
+                .WithMany()
+                .HasForeignKey(h => h.EstadoNuevoId)
+                .OnDelete(DeleteBehavior.NoAction);
+
             modelBuilder.Entity<Reporte>().Property(r => r.Latitud).HasPrecision(9, 6);
             modelBuilder.Entity<Reporte>().Property(r => r.Longitud).HasPrecision(9, 6);
         }
